@@ -1,0 +1,2 @@
+C:\Users\zihao\source\repos\moldplan-change-database\publish\osx-arm64\MoldplanDbSwitcher.pdb
+C:\Users\zihao\source\repos\moldplan-change-database\publish\osx-arm64\MoldplanDbSwitcher

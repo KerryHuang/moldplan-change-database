@@ -1,0 +1,3 @@
+[submodule "apps/DatabaseDescriptionApp"]
+	path = apps/DatabaseDescriptionApp
+	url = https://github.com/KerryHuang/DatabaseDescriptionApp.git

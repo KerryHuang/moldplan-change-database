@@ -1,0 +1,89 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MoldplanDbSwitcher.ViewModels"
+        x:Class="MoldplanDbSwitcher.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="資料庫連線切換工具"
+        Icon="/Assets/app-icon.ico"
+        Width="650" Height="580"
+        WindowStartupLocation="CenterScreen">
+
+  <DockPanel Margin="16">
+
+    <!-- 頂部：連線來源篩選 -->
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="16" Margin="0,0,0,12">
+      <TextBlock Text="連線來源：" VerticalAlignment="Center" />
+      <CheckBox Content="TableSpec" IsChecked="{Binding ShowTableSpec}" />
+      <CheckBox Content="自訂" IsChecked="{Binding ShowCustom}" />
+      <Button Content="重新整理" Command="{Binding RefreshAllCommand}" Margin="16,0,0,0" />
+    </StackPanel>
+
+    <!-- 底部：狀態列與操作按鈕 -->
+    <StackPanel DockPanel.Dock="Bottom" Spacing="8">
+      <!-- 變更前後對比 -->
+      <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="4" Padding="8"
+              IsVisible="{Binding PreviewBefore, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <StackPanel Spacing="4">
+          <TextBlock Text="變更前後對比" FontWeight="Bold" />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="變更前:" Foreground="Gray" />
+            <TextBlock Text="{Binding PreviewBefore}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="變更後:" Foreground="Green" />
+            <TextBlock Text="{Binding PreviewAfter}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- 操作按鈕 -->
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Content="套用變更" Command="{Binding ApplyChangesCommand}"
+                Classes="accent" HorizontalAlignment="Left" />
+        <Button Content="新增自訂連線" Click="OnAddConnectionClick"
+                HorizontalAlignment="Left" />
+        <Button Content="刪除自訂連線" Click="OnDeleteConnectionClick"
+                HorizontalAlignment="Left" />
+      </StackPanel>
+
+      <!-- 狀態訊息 -->
+      <TextBlock Text="{Binding StatusMessage}" Margin="0,4,0,0"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    </StackPanel>
+
+    <!-- 中間：連線清單 + SERVER.txt 選擇 -->
+    <DockPanel>
+      <!-- SERVER.txt 選擇 -->
+      <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,8">
+        <TextBlock Text="SERVER.txt 位置：" FontWeight="Bold" Margin="0,0,0,4" />
+        <ItemsControl ItemsSource="{Binding ServerTxtFiles}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ServerTxtFileItem">
+              <CheckBox Content="{Binding Path}" IsChecked="{Binding IsSelected}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Text="找不到 SERVER.txt 檔案"
+                   IsVisible="{Binding !ServerTxtFiles.Count}"
+                   Foreground="Orange" Margin="0,4,0,0" />
+      </StackPanel>
+
+      <!-- 連線清單 DataGrid -->
+      <DataGrid ItemsSource="{Binding Connections}"
+                SelectedItem="{Binding SelectedConnection}"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                SelectionMode="Single"
+                GridLinesVisibility="Horizontal"
+                CanUserResizeColumns="True">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="來源" Binding="{Binding Source}" Width="80" />
+          <DataGridTextColumn Header="名稱" Binding="{Binding Name}" Width="*" />
+          <DataGridTextColumn Header="伺服器" Binding="{Binding Server}" Width="*" />
+          <DataGridTextColumn Header="資料庫" Binding="{Binding Database}" Width="*" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </DockPanel>
+
+  </DockPanel>
+</Window>
