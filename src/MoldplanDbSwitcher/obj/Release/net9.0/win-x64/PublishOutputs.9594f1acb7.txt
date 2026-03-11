@@ -1,2 +1,0 @@
-C:\Users\zihao\source\repos\moldplan-change-database\publish\win-x64\MoldplanDbSwitcher.pdb
-C:\Users\zihao\source\repos\moldplan-change-database\publish\win-x64\MoldplanDbSwitcher.exe
