@@ -1,0 +1,126 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  PROJECT_PATH: src/MoldplanDbSwitcher/MoldplanDbSwitcher.csproj
+  APP_NAME: MoldplanDbSwitcher
+
+jobs:
+  build-windows:
+    name: 建置 Windows
+    runs-on: windows-latest
+    steps:
+      - name: 檢出程式碼
+        uses: actions/checkout@v4
+
+      - name: 設定 .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 取得版本號
+        id: get-version
+        shell: bash
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: 還原相依套件
+        run: dotnet restore
+
+      - name: 執行測試
+        run: dotnet test --configuration Release --no-restore --verbosity normal
+
+      - name: 發布應用程式
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained -o publish/win-x64
+
+      - name: 建立壓縮包
+        shell: pwsh
+        run: Compress-Archive -Path publish/win-x64/* -DestinationPath "${{ env.APP_NAME }}-${{ steps.get-version.outputs.version }}-win-x64.zip"
+
+      - name: 上傳構件
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: ${{ env.APP_NAME }}-*.zip
+          retention-days: 30
+
+  build-macos:
+    name: 建置 macOS (${{ matrix.arch }})
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        runtime: [osx-arm64, osx-x64]
+        include:
+          - runtime: osx-arm64
+            arch: arm64
+          - runtime: osx-x64
+            arch: x64
+    steps:
+      - name: 檢出程式碼
+        uses: actions/checkout@v4
+
+      - name: 設定 .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 取得版本號
+        id: get-version
+        shell: bash
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: 還原相依套件
+        run: dotnet restore
+
+      - name: 執行測試
+        run: dotnet test --configuration Release --no-restore --verbosity normal
+
+      - name: 發布應用程式
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -r ${{ matrix.runtime }} --self-contained -o publish/${{ matrix.runtime }}
+
+      - name: 建立壓縮包
+        run: |
+          cd publish/${{ matrix.runtime }}
+          zip -r ../../${{ env.APP_NAME }}-${{ steps.get-version.outputs.version }}-${{ matrix.runtime }}.zip .
+
+      - name: 上傳構件
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release-${{ matrix.arch }}
+          path: ${{ env.APP_NAME }}-*.zip
+          retention-days: 30
+
+  create-release:
+    name: 建立 GitHub Release
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 下載所有構件
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 整理發布檔案
+        run: |
+          mkdir -p release-files
+          cp artifacts/windows-release/* release-files/ 2>/dev/null || true
+          cp artifacts/macos-release-arm64/* release-files/ 2>/dev/null || true
+          cp artifacts/macos-release-x64/* release-files/ 2>/dev/null || true
+          ls -la release-files/
+
+      - name: 建立 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-files/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-') }}
