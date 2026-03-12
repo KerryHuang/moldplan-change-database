@@ -6,6 +6,7 @@ namespace MoldplanDbSwitcher.Services;
 public class ConnectionExportService : IConnectionExportService
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private static readonly byte[] MagicBytes = "TSEC"u8.ToArray();
 
     public byte[] ExportToJson(IReadOnlyList<ConnectionProfile> profiles, bool includePasswords)
     {
@@ -18,13 +19,20 @@ public class ConnectionExportService : IConnectionExportService
         => throw new NotImplementedException();
 
     public ConnectionExportData ImportFromJson(byte[] data)
-        => throw new NotImplementedException();
+    {
+        return JsonSerializer.Deserialize<ConnectionExportData>(data)
+            ?? throw new InvalidOperationException("無法解析匯入資料");
+    }
 
     public ConnectionExportData ImportFromEncryptedJson(byte[] data, string password)
         => throw new NotImplementedException();
 
     public bool IsEncryptedFormat(byte[] data)
-        => throw new NotImplementedException();
+    {
+        if (data.Length < MagicBytes.Length)
+            return false;
+        return data.AsSpan(0, MagicBytes.Length).SequenceEqual(MagicBytes);
+    }
 
     private static List<ConnectionProfile> PrepareProfiles(IReadOnlyList<ConnectionProfile> profiles, bool includePasswords)
     {
