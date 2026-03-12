@@ -11,11 +11,19 @@ public class SqlConnectionFactory : ISqlConnectionFactory
         {
             DataSource = profile.Server,
             InitialCatalog = profile.Database,
-            UserID = profile.Username,
-            Password = profile.Password,
             TrustServerCertificate = true,
             ConnectTimeout = 10
         };
+
+        if (profile.AuthType == AuthenticationType.SqlServerAuthentication)
+        {
+            builder.UserID = profile.Username;
+            builder.Password = profile.Password;
+        }
+        else
+        {
+            builder.IntegratedSecurity = true;
+        }
 
         return new SqlConnection(builder.ConnectionString);
     }
