@@ -15,6 +15,9 @@
       <MenuItem Header="檔案(_F)">
         <MenuItem Header="匯出連線設定(_X)" Click="OnExportConnectionsClick" />
         <MenuItem Header="匯入連線設定(_I)" Click="OnImportConnectionsClick" />
+        <Separator />
+        <MenuItem Header="匯出功能差異表(_R)" Click="OnExportFeatureReportClick"
+                  IsEnabled="{Binding !IsExporting}" />
       </MenuItem>
     </Menu>
 
@@ -51,9 +54,6 @@
         <Button Content="新增自訂連線" Click="OnAddConnectionClick"
                 HorizontalAlignment="Left" />
         <Button Content="刪除自訂連線" Click="OnDeleteConnectionClick"
-                HorizontalAlignment="Left" />
-        <Button Content="匯出功能差異表" Click="OnExportFeatureReportClick"
-                IsEnabled="{Binding !IsExporting}"
                 HorizontalAlignment="Left" />
       </StackPanel>
 
