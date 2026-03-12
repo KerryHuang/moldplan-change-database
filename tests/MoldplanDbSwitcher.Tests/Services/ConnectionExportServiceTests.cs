@@ -129,6 +129,36 @@ public class ConnectionExportServiceTests
     }
 
     [Fact]
+    public void ImportFromJson_PascalCaseProperties_ParsesCorrectly()
+    {
+        // TableSpec 匯出的 JSON 使用 PascalCase 屬性名
+        var json = """
+        {
+            "Version": 1,
+            "ExportedAt": "2026-03-12T00:00:00Z",
+            "Profiles": [
+                {
+                    "Id": "abc-123",
+                    "Name": "dev",
+                    "Server": "127.0.0.1",
+                    "Database": "mis",
+                    "AuthType": 0,
+                    "Username": "",
+                    "Password": null,
+                    "IsDefault": false
+                }
+            ]
+        }
+        """;
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+        var result = _service.ImportFromJson(bytes);
+        Assert.Single(result.Profiles);
+        Assert.Equal("dev", result.Profiles[0].Name);
+        Assert.Equal("127.0.0.1", result.Profiles[0].Server);
+        Assert.Equal("mis", result.Profiles[0].Database);
+    }
+
+    [Fact]
     public void ExportToEncryptedJson_IncludePasswordsFalse_NullsOutPasswords()
     {
         var profiles = new List<ConnectionProfile>

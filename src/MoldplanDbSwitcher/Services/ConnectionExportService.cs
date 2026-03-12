@@ -7,6 +7,7 @@ namespace MoldplanDbSwitcher.Services;
 public class ConnectionExportService : IConnectionExportService
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions ImportJsonOptions = new() { PropertyNameCaseInsensitive = true };
     private static readonly byte[] MagicBytes = "TSEC"u8.ToArray();
     private const int SaltSize = 16;
     private const int IvSize = 16;
@@ -49,7 +50,7 @@ public class ConnectionExportService : IConnectionExportService
 
     public ConnectionExportData ImportFromJson(byte[] data)
     {
-        return JsonSerializer.Deserialize<ConnectionExportData>(data)
+        return JsonSerializer.Deserialize<ConnectionExportData>(data, ImportJsonOptions)
             ?? throw new InvalidOperationException("無法解析匯入資料");
     }
 
@@ -74,7 +75,7 @@ public class ConnectionExportService : IConnectionExportService
         {
             using var decryptor = aes.CreateDecryptor();
             var jsonBytes = decryptor.TransformFinalBlock(encrypted, 0, encrypted.Length);
-            return JsonSerializer.Deserialize<ConnectionExportData>(jsonBytes)
+            return JsonSerializer.Deserialize<ConnectionExportData>(jsonBytes, ImportJsonOptions)
                 ?? throw new InvalidOperationException("無法解析匯入資料");
         }
         catch (CryptographicException)
