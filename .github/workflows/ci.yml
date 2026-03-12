@@ -25,10 +25,12 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: 還原相依套件
-        run: dotnet restore
+        run: |
+          dotnet restore src/MoldplanDbSwitcher/MoldplanDbSwitcher.csproj
+          dotnet restore tests/MoldplanDbSwitcher.Tests/MoldplanDbSwitcher.Tests.csproj
 
       - name: 建置
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build src/MoldplanDbSwitcher/MoldplanDbSwitcher.csproj --configuration Release --no-restore
 
       - name: 執行測試
-        run: dotnet test --configuration Release --no-restore --verbosity normal
+        run: dotnet test tests/MoldplanDbSwitcher.Tests/MoldplanDbSwitcher.Tests.csproj --configuration Release --no-restore --verbosity normal

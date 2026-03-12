@@ -31,10 +31,12 @@ jobs:
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: 還原相依套件
-        run: dotnet restore
+        run: |
+          dotnet restore src/MoldplanDbSwitcher/MoldplanDbSwitcher.csproj
+          dotnet restore tests/MoldplanDbSwitcher.Tests/MoldplanDbSwitcher.Tests.csproj
 
       - name: 執行測試
-        run: dotnet test --configuration Release --no-restore --verbosity normal
+        run: dotnet test tests/MoldplanDbSwitcher.Tests/MoldplanDbSwitcher.Tests.csproj --configuration Release --no-restore --verbosity normal
 
       - name: 發布應用程式
         run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained -o publish/win-x64
@@ -76,10 +78,7 @@ jobs:
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: 還原相依套件
-        run: dotnet restore
-
-      - name: 執行測試
-        run: dotnet test --configuration Release --no-restore --verbosity normal
+        run: dotnet restore ${{ env.PROJECT_PATH }}
 
       - name: 發布應用程式
         run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -r ${{ matrix.runtime }} --self-contained -o publish/${{ matrix.runtime }}
