@@ -16,6 +16,12 @@ public class ConnectionProfile
     [JsonPropertyName("database")]
     public string Database { get; set; } = string.Empty;
 
+    [JsonPropertyName("username")]
+    public string Username { get; set; } = string.Empty;
+
+    [JsonPropertyName("password")]
+    public string Password { get; set; } = string.Empty;
+
     [JsonIgnore]
     public string Source { get; set; } = "Custom";
 }

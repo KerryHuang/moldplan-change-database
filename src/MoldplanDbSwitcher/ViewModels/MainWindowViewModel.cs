@@ -11,6 +11,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IConnectionSourceService _connectionSource;
     private readonly IServerTxtService _serverTxtService;
     private readonly ISettingsService _settingsService;
+    private readonly IFeatureReportService _featureReportService;
 
     [ObservableProperty]
     private ObservableCollection<ConnectionProfile> _connections = [];
@@ -36,14 +37,24 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _showCustom = true;
 
+    [ObservableProperty]
+    private bool _isExporting;
+
+    [ObservableProperty]
+    private string _progressText = string.Empty;
+
+    public Func<Task<string?>>? SaveFileCallback { get; set; }
+
     public MainWindowViewModel(
         IConnectionSourceService connectionSource,
         IServerTxtService serverTxtService,
-        ISettingsService settingsService)
+        ISettingsService settingsService,
+        IFeatureReportService featureReportService)
     {
         _connectionSource = connectionSource;
         _serverTxtService = serverTxtService;
         _settingsService = settingsService;
+        _featureReportService = featureReportService;
 
         LoadConnections();
         DiscoverServerTxtFiles();
@@ -135,6 +146,51 @@ public partial class MainWindowViewModel : ObservableObject
             StatusMessage = $"完成：{successCount} 個成功，{failCount} 個失敗";
 
         UpdatePreview();
+    }
+
+    [RelayCommand]
+    private async Task ExportFeatureReport()
+    {
+        IsExporting = true;
+        ProgressText = "正在查詢客戶功能...";
+
+        try
+        {
+            var progress = new Progress<string>(msg => ProgressText = msg);
+            var data = await _featureReportService.QueryAllCustomerFeaturesAsync(progress);
+
+            if (data.Customers.Count == 0)
+            {
+                StatusMessage = $"所有連線查詢失敗：{string.Join(", ", data.FailedConnections)}";
+                return;
+            }
+
+            var path = SaveFileCallback != null ? await SaveFileCallback() : null;
+            if (path is null)
+            {
+                StatusMessage = "已取消匯出";
+                return;
+            }
+
+            ProgressText = "正在產出 Excel...";
+            await _featureReportService.ExportToExcelAsync(path, data);
+
+            var msg = $"已成功匯出至 {path}";
+            if (data.SkippedConnections.Count > 0)
+                msg += $"（{data.SkippedConnections.Count} 個連線無資料已跳過：{string.Join(", ", data.SkippedConnections)}）";
+            if (data.FailedConnections.Count > 0)
+                msg += $"（{data.FailedConnections.Count} 個連線失敗：{string.Join(", ", data.FailedConnections)}）";
+            StatusMessage = msg;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"匯出失敗：{ex.Message}";
+        }
+        finally
+        {
+            IsExporting = false;
+            ProgressText = string.Empty;
+        }
     }
 
     [RelayCommand]

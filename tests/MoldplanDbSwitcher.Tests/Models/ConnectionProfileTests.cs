@@ -38,6 +38,38 @@ public class ConnectionProfileTests
     }
 
     [Fact]
+    public void Deserialize_WithCredentials_ReadsUsernameAndPassword()
+    {
+        var json = """
+        {
+            "profiles": [
+                {
+                    "Id": "test-id",
+                    "Name": "Gma-Staging",
+                    "Server": "192.168.1.250",
+                    "Database": "gma-staging",
+                    "AuthType": 1,
+                    "Username": "mis",
+                    "Password": "service",
+                    "IsDefault": false
+                }
+            ],
+            "CurrentProfileId": "test-id"
+        }
+        """;
+
+        var data = JsonSerializer.Deserialize<ConnectionsFile>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        Assert.NotNull(data);
+        Assert.Single(data.Profiles);
+        Assert.Equal("mis", data.Profiles[0].Username);
+        Assert.Equal("service", data.Profiles[0].Password);
+    }
+
+    [Fact]
     public void Source_IsJsonIgnored()
     {
         var profile = new ConnectionProfile { Name = "test", Source = "TableSpec" };

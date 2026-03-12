@@ -44,7 +44,14 @@
                 HorizontalAlignment="Left" />
         <Button Content="刪除自訂連線" Click="OnDeleteConnectionClick"
                 HorizontalAlignment="Left" />
+        <Button Content="匯出功能差異表" Click="OnExportFeatureReportClick"
+                IsEnabled="{Binding !IsExporting}"
+                HorizontalAlignment="Left" />
       </StackPanel>
+
+      <!-- 匯出進度 -->
+      <TextBlock Text="{Binding ProgressText}" Margin="0,4,0,0"
+                 IsVisible="{Binding IsExporting}" Foreground="Blue" />
 
       <!-- 狀態訊息 -->
       <TextBlock Text="{Binding StatusMessage}" Margin="0,4,0,0"

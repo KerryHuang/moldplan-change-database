@@ -11,12 +11,14 @@ public class MainWindowViewModelTests
     private readonly IConnectionSourceService _connectionSource;
     private readonly IServerTxtService _serverTxtService;
     private readonly ISettingsService _settingsService;
+    private readonly IFeatureReportService _featureReportService;
 
     public MainWindowViewModelTests()
     {
         _connectionSource = Substitute.For<IConnectionSourceService>();
         _serverTxtService = Substitute.For<IServerTxtService>();
         _settingsService = Substitute.For<ISettingsService>();
+        _featureReportService = Substitute.For<IFeatureReportService>();
 
         _connectionSource.LoadTableSpecConnections().Returns(new List<ConnectionProfile>
         {
@@ -26,7 +28,7 @@ public class MainWindowViewModelTests
         _serverTxtService.DiscoverPaths().Returns(new List<string>());
     }
 
-    private MainWindowViewModel CreateVm() => new(_connectionSource, _serverTxtService, _settingsService);
+    private MainWindowViewModel CreateVm() => new(_connectionSource, _serverTxtService, _settingsService, _featureReportService);
 
     [Fact]
     public void Constructor_LoadsConnections()
@@ -101,5 +103,50 @@ public class MainWindowViewModelTests
         vm.DeleteCustomConnection(tableSpecProfile);
 
         _settingsService.DidNotReceive().DeleteProfile(Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ExportFeatureReport_SetsIsExporting()
+    {
+        _featureReportService.QueryAllCustomerFeaturesAsync(Arg.Any<IProgress<string>>())
+            .Returns(new FeatureReportData());
+
+        var vm = CreateVm();
+        // 設定 SaveFileCallback 以避免 null
+        vm.SaveFileCallback = () => Task.FromResult<string?>(Path.GetTempFileName());
+
+        await vm.ExportFeatureReportCommand.ExecuteAsync(null);
+
+        Assert.False(vm.IsExporting);
+    }
+
+    [Fact]
+    public async Task ExportFeatureReport_NoSavePath_DoesNotExport()
+    {
+        _featureReportService.QueryAllCustomerFeaturesAsync(Arg.Any<IProgress<string>>())
+            .Returns(new FeatureReportData());
+
+        var vm = CreateVm();
+        vm.SaveFileCallback = () => Task.FromResult<string?>(null);
+
+        await vm.ExportFeatureReportCommand.ExecuteAsync(null);
+
+        await _featureReportService.DidNotReceive().ExportToExcelAsync(Arg.Any<string>(), Arg.Any<FeatureReportData>());
+    }
+
+    [Fact]
+    public async Task ExportFeatureReport_AllFailed_ShowsError()
+    {
+        var reportData = new FeatureReportData();
+        reportData.FailedConnections.Add("Bad-Staging");
+        _featureReportService.QueryAllCustomerFeaturesAsync(Arg.Any<IProgress<string>>())
+            .Returns(reportData);
+
+        var vm = CreateVm();
+        vm.SaveFileCallback = () => Task.FromResult<string?>(Path.GetTempFileName());
+
+        await vm.ExportFeatureReportCommand.ExecuteAsync(null);
+
+        Assert.Contains("失敗", vm.StatusMessage);
     }
 }
