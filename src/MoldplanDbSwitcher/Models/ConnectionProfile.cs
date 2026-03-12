@@ -2,6 +2,12 @@ using System.Text.Json.Serialization;
 
 namespace MoldplanDbSwitcher.Models;
 
+public enum AuthenticationType
+{
+    WindowsAuthentication = 0,
+    SqlServerAuthentication = 1
+}
+
 public class ConnectionProfile
 {
     [JsonPropertyName("id")]
@@ -16,11 +22,17 @@ public class ConnectionProfile
     [JsonPropertyName("database")]
     public string Database { get; set; } = string.Empty;
 
+    [JsonPropertyName("authType")]
+    public AuthenticationType AuthType { get; set; } = AuthenticationType.WindowsAuthentication;
+
     [JsonPropertyName("username")]
     public string Username { get; set; } = string.Empty;
 
     [JsonPropertyName("password")]
     public string Password { get; set; } = string.Empty;
+
+    [JsonPropertyName("isDefault")]
+    public bool IsDefault { get; set; }
 
     [JsonIgnore]
     public string Source { get; set; } = "Custom";

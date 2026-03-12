@@ -77,4 +77,44 @@ public class ConnectionProfileTests
         Assert.DoesNotContain("Source", json);
         Assert.DoesNotContain("TableSpec", json);
     }
+
+    [Fact]
+    public void NewProfile_AuthType_DefaultsToWindowsAuthentication()
+    {
+        var profile = new ConnectionProfile();
+        Assert.Equal(AuthenticationType.WindowsAuthentication, profile.AuthType);
+    }
+
+    [Fact]
+    public void NewProfile_IsDefault_DefaultsToFalse()
+    {
+        var profile = new ConnectionProfile();
+        Assert.False(profile.IsDefault);
+    }
+
+    [Fact]
+    public void Deserialize_MissingAuthTypeAndIsDefault_UsesDefaults()
+    {
+        var json = """
+        {
+            "profiles": [
+                {
+                    "id": "test-id",
+                    "name": "dev",
+                    "server": "127.0.0.1",
+                    "database": "mis",
+                    "username": "",
+                    "password": ""
+                }
+            ],
+            "currentProfileId": "test-id"
+        }
+        """;
+
+        var data = JsonSerializer.Deserialize<ConnectionsFile>(json);
+
+        Assert.NotNull(data);
+        Assert.Equal(AuthenticationType.WindowsAuthentication, data.Profiles[0].AuthType);
+        Assert.False(data.Profiles[0].IsDefault);
+    }
 }
