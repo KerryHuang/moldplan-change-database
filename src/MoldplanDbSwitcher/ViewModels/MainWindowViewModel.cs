@@ -12,6 +12,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IServerTxtService _serverTxtService;
     private readonly ISettingsService _settingsService;
     private readonly IFeatureReportService _featureReportService;
+    private readonly IConnectionExportService _connectionExportService;
 
     [ObservableProperty]
     private ObservableCollection<ConnectionProfile> _connections = [];
@@ -45,16 +46,23 @@ public partial class MainWindowViewModel : ObservableObject
 
     public Func<Task<string?>>? SaveFileCallback { get; set; }
 
+    public IConnectionExportService ConnectionExportService => _connectionExportService;
+    public ISettingsService SettingsServicePublic => _settingsService;
+
+    public IReadOnlyList<ConnectionProfile> GetConnectionsForExport() => Connections.ToList();
+
     public MainWindowViewModel(
         IConnectionSourceService connectionSource,
         IServerTxtService serverTxtService,
         ISettingsService settingsService,
-        IFeatureReportService featureReportService)
+        IFeatureReportService featureReportService,
+        IConnectionExportService connectionExportService)
     {
         _connectionSource = connectionSource;
         _serverTxtService = serverTxtService;
         _settingsService = settingsService;
         _featureReportService = featureReportService;
+        _connectionExportService = connectionExportService;
 
         LoadConnections();
         DiscoverServerTxtFiles();

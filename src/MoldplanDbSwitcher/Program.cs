@@ -25,6 +25,7 @@ class Program
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
         services.AddSingleton<IFeatureQueryService, FeatureQueryService>();
         services.AddSingleton<IFeatureReportService, FeatureReportService>();
+        services.AddSingleton<IConnectionExportService, ConnectionExportService>();
         services.AddTransient<MainWindowViewModel>();
     }
 

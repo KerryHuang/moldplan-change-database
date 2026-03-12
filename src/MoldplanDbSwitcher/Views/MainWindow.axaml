@@ -10,6 +10,14 @@
 
   <DockPanel Margin="16">
 
+    <!-- 選單列 -->
+    <Menu DockPanel.Dock="Top" Margin="0,0,0,8">
+      <MenuItem Header="檔案(_F)">
+        <MenuItem Header="匯出連線設定(_X)" Click="OnExportConnectionsClick" />
+        <MenuItem Header="匯入連線設定(_I)" Click="OnImportConnectionsClick" />
+      </MenuItem>
+    </Menu>
+
     <!-- 頂部：連線來源篩選 -->
     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="16" Margin="0,0,0,12">
       <TextBlock Text="連線來源：" VerticalAlignment="Center" />

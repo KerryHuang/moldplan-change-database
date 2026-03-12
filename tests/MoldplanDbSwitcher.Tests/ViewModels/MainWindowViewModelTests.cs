@@ -12,6 +12,7 @@ public class MainWindowViewModelTests
     private readonly IServerTxtService _serverTxtService;
     private readonly ISettingsService _settingsService;
     private readonly IFeatureReportService _featureReportService;
+    private readonly IConnectionExportService _connectionExportService;
 
     public MainWindowViewModelTests()
     {
@@ -19,6 +20,7 @@ public class MainWindowViewModelTests
         _serverTxtService = Substitute.For<IServerTxtService>();
         _settingsService = Substitute.For<ISettingsService>();
         _featureReportService = Substitute.For<IFeatureReportService>();
+        _connectionExportService = Substitute.For<IConnectionExportService>();
 
         _connectionSource.LoadTableSpecConnections().Returns(new List<ConnectionProfile>
         {
@@ -28,7 +30,9 @@ public class MainWindowViewModelTests
         _serverTxtService.DiscoverPaths().Returns(new List<string>());
     }
 
-    private MainWindowViewModel CreateVm() => new(_connectionSource, _serverTxtService, _settingsService, _featureReportService);
+    private MainWindowViewModel CreateVm() => new(
+        _connectionSource, _serverTxtService, _settingsService,
+        _featureReportService, _connectionExportService);
 
     [Fact]
     public void Constructor_LoadsConnections()
@@ -132,6 +136,15 @@ public class MainWindowViewModelTests
         await vm.ExportFeatureReportCommand.ExecuteAsync(null);
 
         await _featureReportService.DidNotReceive().ExportToExcelAsync(Arg.Any<string>(), Arg.Any<FeatureReportData>());
+    }
+
+    [Fact]
+    public void GetConnectionsForExport_ReturnsCurrentConnections()
+    {
+        var vm = CreateVm();
+        var result = vm.GetConnectionsForExport();
+        Assert.NotNull(result);
+        Assert.Single(result);
     }
 
     [Fact]
