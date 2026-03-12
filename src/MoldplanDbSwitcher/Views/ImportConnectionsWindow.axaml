@@ -1,0 +1,67 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MoldplanDbSwitcher.ViewModels"
+        x:Class="MoldplanDbSwitcher.Views.ImportConnectionsWindow"
+        x:DataType="vm:ImportConnectionsViewModel"
+        Title="匯入連線設定"
+        Width="500" Height="480"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+  <DockPanel Margin="16">
+
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+      <Button Content="匯入" Click="OnImportClick"
+              IsVisible="{Binding !NeedsPassword}" Classes="accent" />
+      <Button Content="取消" Click="OnCancelClick" />
+    </StackPanel>
+
+    <Panel>
+
+      <StackPanel Spacing="12" IsVisible="{Binding NeedsPassword}">
+        <TextBlock Text="此檔案為加密格式，請輸入解密密碼：" FontWeight="Bold" />
+        <TextBox Watermark="解密密碼" PasswordChar="●"
+                 Text="{Binding DecryptPassword}" />
+        <TextBlock Text="{Binding ErrorMessage}" Foreground="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        <Button Content="解密" Click="OnDecryptClick" Classes="accent" />
+      </StackPanel>
+
+      <StackPanel Spacing="12" IsVisible="{Binding !NeedsPassword}">
+        <TextBlock Text="即將匯入的連線設定：" FontWeight="Bold" FontSize="14" />
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button Content="全部覆蓋" Command="{Binding OverwriteAllCommand}" />
+          <Button Content="全部跳過" Command="{Binding SkipAllCommand}" />
+        </StackPanel>
+
+        <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="4"
+                MaxHeight="300" Padding="4">
+          <ScrollViewer>
+            <ItemsControl ItemsSource="{Binding ImportPreviews}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ImportPreviewItem">
+                  <Border Margin="2" Padding="8" CornerRadius="4"
+                          BorderBrush="Gray" BorderThickness="1">
+                    <StackPanel Spacing="4">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding Profile.Name}" FontWeight="SemiBold" />
+                        <Border Background="Orange" CornerRadius="3" Padding="4,1"
+                                IsVisible="{Binding HasConflict}">
+                          <TextBlock Text="衝突" Foreground="White" FontSize="11" />
+                        </Border>
+                      </StackPanel>
+                      <TextBlock Text="{Binding Profile.Server}" Foreground="Gray" FontSize="12" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Border>
+      </StackPanel>
+
+    </Panel>
+  </DockPanel>
+</Window>
