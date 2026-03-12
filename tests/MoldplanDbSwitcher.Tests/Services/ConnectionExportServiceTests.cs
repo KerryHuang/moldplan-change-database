@@ -91,4 +91,52 @@ public class ConnectionExportServiceTests
         var data = new byte[] { (byte)'T', (byte)'S' };
         Assert.False(_service.IsEncryptedFormat(data));
     }
+
+    [Fact]
+    public void ExportToEncryptedJson_ThenImport_RoundTripsCorrectly()
+    {
+        var profiles = new List<ConnectionProfile>
+        {
+            new() { Name = "dev", Server = "127.0.0.1", Database = "mis", Password = "dbpass" }
+        };
+        var encrypted = _service.ExportToEncryptedJson(profiles, "mypassword", includePasswords: true);
+        var result = _service.ImportFromEncryptedJson(encrypted, "mypassword");
+        Assert.Single(result.Profiles);
+        Assert.Equal("dev", result.Profiles[0].Name);
+        Assert.Equal("dbpass", result.Profiles[0].Password);
+    }
+
+    [Fact]
+    public void ExportToEncryptedJson_HasMagicBytes()
+    {
+        var profiles = new List<ConnectionProfile>
+        {
+            new() { Name = "dev", Server = "127.0.0.1", Database = "mis" }
+        };
+        var encrypted = _service.ExportToEncryptedJson(profiles, "password", includePasswords: true);
+        Assert.True(_service.IsEncryptedFormat(encrypted));
+    }
+
+    [Fact]
+    public void ImportFromEncryptedJson_WrongPassword_ThrowsException()
+    {
+        var profiles = new List<ConnectionProfile>
+        {
+            new() { Name = "dev", Server = "127.0.0.1", Database = "mis" }
+        };
+        var encrypted = _service.ExportToEncryptedJson(profiles, "correct", includePasswords: true);
+        Assert.ThrowsAny<Exception>(() => _service.ImportFromEncryptedJson(encrypted, "wrong"));
+    }
+
+    [Fact]
+    public void ExportToEncryptedJson_IncludePasswordsFalse_NullsOutPasswords()
+    {
+        var profiles = new List<ConnectionProfile>
+        {
+            new() { Name = "dev", Server = "127.0.0.1", Database = "mis", Password = "secret" }
+        };
+        var encrypted = _service.ExportToEncryptedJson(profiles, "password", includePasswords: false);
+        var result = _service.ImportFromEncryptedJson(encrypted, "password");
+        Assert.Null(result.Profiles[0].Password);
+    }
 }
