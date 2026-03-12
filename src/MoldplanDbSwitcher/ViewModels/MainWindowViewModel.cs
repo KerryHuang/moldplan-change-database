@@ -49,7 +49,11 @@ public partial class MainWindowViewModel : ObservableObject
     public IConnectionExportService ConnectionExportService => _connectionExportService;
     public ISettingsService SettingsServicePublic => _settingsService;
 
-    public IReadOnlyList<ConnectionProfile> GetConnectionsForExport() => Connections.ToList();
+    public IReadOnlyList<ConnectionProfile> GetConnectionsForExport()
+        => Connections.Where(c => c.Source == "Custom").ToList();
+
+    public IReadOnlyList<ConnectionProfile> GetCustomConnections()
+        => Connections.Where(c => c.Source == "Custom").ToList();
 
     public MainWindowViewModel(
         IConnectionSourceService connectionSource,

@@ -139,12 +139,24 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public void GetConnectionsForExport_ReturnsCurrentConnections()
+    public void GetConnectionsForExport_ReturnsOnlyCustomConnections()
+    {
+        _connectionSource.LoadCustomConnections().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "custom1", Server = "10.0.0.1", Database = "db1", Source = "Custom" }
+        });
+        var vm = CreateVm();
+        var result = vm.GetConnectionsForExport();
+        Assert.Single(result);
+        Assert.Equal("custom1", result[0].Name);
+    }
+
+    [Fact]
+    public void GetConnectionsForExport_ExcludesTableSpecConnections()
     {
         var vm = CreateVm();
         var result = vm.GetConnectionsForExport();
-        Assert.NotNull(result);
-        Assert.Single(result);
+        Assert.Empty(result); // 只有 TableSpec 連線，應回傳空
     }
 
     [Fact]

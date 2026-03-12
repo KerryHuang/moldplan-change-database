@@ -89,7 +89,7 @@ public partial class MainWindow : Window
         var data = ms.ToArray();
 
         var importVm = new ImportConnectionsViewModel(
-            vm.ConnectionExportService, vm.SettingsServicePublic, vm.GetConnectionsForExport());
+            vm.ConnectionExportService, vm.SettingsServicePublic, vm.GetCustomConnections());
         importVm.LoadImportData(data);
 
         var dialog = new ImportConnectionsWindow { DataContext = importVm };
