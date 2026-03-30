@@ -13,6 +13,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly IFeatureReportService _featureReportService;
     private readonly IConnectionExportService _connectionExportService;
+    private readonly IUsageReportService _usageReportService;
 
     [ObservableProperty]
     private ObservableCollection<ConnectionProfile> _connections = [];
@@ -45,6 +46,7 @@ public partial class MainWindowViewModel : ObservableObject
     private string _progressText = string.Empty;
 
     public Func<Task<string?>>? SaveFileCallback { get; set; }
+    public Func<Task<string?>>? SaveUsageReportCallback { get; set; }
 
     public IConnectionExportService ConnectionExportService => _connectionExportService;
     public ISettingsService SettingsServicePublic => _settingsService;
@@ -60,13 +62,15 @@ public partial class MainWindowViewModel : ObservableObject
         IServerTxtService serverTxtService,
         ISettingsService settingsService,
         IFeatureReportService featureReportService,
-        IConnectionExportService connectionExportService)
+        IConnectionExportService connectionExportService,
+        IUsageReportService usageReportService)
     {
         _connectionSource = connectionSource;
         _serverTxtService = serverTxtService;
         _settingsService = settingsService;
         _featureReportService = featureReportService;
         _connectionExportService = connectionExportService;
+        _usageReportService = usageReportService;
 
         LoadConnections();
         DiscoverServerTxtFiles();
@@ -186,6 +190,51 @@ public partial class MainWindowViewModel : ObservableObject
 
             ProgressText = "正在產出 Excel...";
             await _featureReportService.ExportToExcelAsync(path, data);
+
+            var msg = $"已成功匯出至 {path}";
+            if (data.SkippedConnections.Count > 0)
+                msg += $"（{data.SkippedConnections.Count} 個連線無資料已跳過：{string.Join(", ", data.SkippedConnections)}）";
+            if (data.FailedConnections.Count > 0)
+                msg += $"（{data.FailedConnections.Count} 個連線失敗：{string.Join(", ", data.FailedConnections)}）";
+            StatusMessage = msg;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"匯出失敗：{ex.Message}";
+        }
+        finally
+        {
+            IsExporting = false;
+            ProgressText = string.Empty;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportUsageReport()
+    {
+        IsExporting = true;
+        ProgressText = "正在查詢使用工時...";
+
+        try
+        {
+            var progress = new Progress<string>(msg => ProgressText = msg);
+            var data = await _usageReportService.QueryAllAsync(progress);
+
+            if (data.Rows.Count == 0)
+            {
+                StatusMessage = $"所有連線查詢失敗或無資料：{string.Join(", ", data.FailedConnections)}";
+                return;
+            }
+
+            var path = SaveUsageReportCallback != null ? await SaveUsageReportCallback() : null;
+            if (path is null)
+            {
+                StatusMessage = "已取消匯出";
+                return;
+            }
+
+            ProgressText = "正在產出 Excel...";
+            await _usageReportService.ExportToExcelAsync(path, data);
 
             var msg = $"已成功匯出至 {path}";
             if (data.SkippedConnections.Count > 0)

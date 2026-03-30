@@ -13,6 +13,7 @@ public class MainWindowViewModelTests
     private readonly ISettingsService _settingsService;
     private readonly IFeatureReportService _featureReportService;
     private readonly IConnectionExportService _connectionExportService;
+    private readonly IUsageReportService _usageReportService;
 
     public MainWindowViewModelTests()
     {
@@ -21,6 +22,7 @@ public class MainWindowViewModelTests
         _settingsService = Substitute.For<ISettingsService>();
         _featureReportService = Substitute.For<IFeatureReportService>();
         _connectionExportService = Substitute.For<IConnectionExportService>();
+        _usageReportService = Substitute.For<IUsageReportService>();
 
         _connectionSource.LoadTableSpecConnections().Returns(new List<ConnectionProfile>
         {
@@ -32,7 +34,7 @@ public class MainWindowViewModelTests
 
     private MainWindowViewModel CreateVm() => new(
         _connectionSource, _serverTxtService, _settingsService,
-        _featureReportService, _connectionExportService);
+        _featureReportService, _connectionExportService, _usageReportService);
 
     [Fact]
     public void Constructor_LoadsConnections()
