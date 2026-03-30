@@ -37,6 +37,28 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void OnExportUsageReportClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm)
+        {
+            vm.SaveUsageReportCallback = async () =>
+            {
+                var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                {
+                    Title = "儲存使用工時統計",
+                    DefaultExtension = "xlsx",
+                    FileTypeChoices = new[]
+                    {
+                        new FilePickerFileType("Excel 檔案") { Patterns = new[] { "*.xlsx" } }
+                    },
+                    SuggestedFileName = "系統功能使用工時統計表"
+                });
+                return file?.Path.LocalPath;
+            };
+            await vm.ExportUsageReportCommand.ExecuteAsync(null);
+        }
+    }
+
     private async void OnAddConnectionClick(object? sender, RoutedEventArgs e)
     {
         var dialog = new ConnectionDialog();
