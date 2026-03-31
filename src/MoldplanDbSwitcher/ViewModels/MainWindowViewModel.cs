@@ -267,7 +267,8 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             var progress = new Progress<string>(msg => ProgressText = msg);
-            var data = await _usageReportService.QueryAllAsync(progress);
+            var profiles = _connectionSource.LoadAllConnections();
+            var data = await _usageReportService.QueryAllAsync(profiles, progress);
 
             if (data.Rows.Count == 0)
             {

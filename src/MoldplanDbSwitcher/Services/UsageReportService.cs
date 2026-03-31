@@ -5,21 +5,20 @@ namespace MoldplanDbSwitcher.Services;
 
 public class UsageReportService : IUsageReportService
 {
-    private readonly IConnectionSourceService _connectionSource;
     private readonly IUsageQueryService _usageQuery;
 
     private static readonly XLColor HeaderBg = XLColor.FromHtml("#4472C4");
     private static readonly XLColor HeaderFg = XLColor.White;
 
-    public UsageReportService(IConnectionSourceService connectionSource, IUsageQueryService usageQuery)
+    public UsageReportService(IUsageQueryService usageQuery)
     {
-        _connectionSource = connectionSource;
         _usageQuery = usageQuery;
     }
 
-    public async Task<UsageReportData> QueryAllAsync(IProgress<string>? progress = null)
+    public async Task<UsageReportData> QueryAllAsync(
+        IReadOnlyList<ConnectionProfile> profiles,
+        IProgress<string>? progress = null)
     {
-        var profiles = _connectionSource.LoadAllConnections();
         var result = new UsageReportData();
 
         var endDate = DateTime.Today;

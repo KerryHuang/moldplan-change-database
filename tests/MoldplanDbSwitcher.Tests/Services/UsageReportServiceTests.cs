@@ -8,15 +8,13 @@ namespace MoldplanDbSwitcher.Tests.Services;
 
 public class UsageReportServiceTests
 {
-    private readonly IConnectionSourceService _connectionSource;
     private readonly IUsageQueryService _usageQuery;
     private readonly UsageReportService _sut;
 
     public UsageReportServiceTests()
     {
-        _connectionSource = Substitute.For<IConnectionSourceService>();
         _usageQuery = Substitute.For<IUsageQueryService>();
-        _sut = new UsageReportService(_connectionSource, _usageQuery);
+        _sut = new UsageReportService(_usageQuery);
     }
 
     [Fact]
@@ -27,7 +25,6 @@ public class UsageReportServiceTests
             new() { Name = "Gma-Staging", Server = "1.1.1.1", Database = "gma", Username = "u", Password = "p" },
             new() { Name = "WayDoSoft01-Test", Server = "2.2.2.2", Database = "wd01", Username = "u", Password = "p" }
         };
-        _connectionSource.LoadAllConnections().Returns(profiles);
 
         _usageQuery.QueryUsageAsync(profiles[0], Arg.Any<DateTime>(), Arg.Any<DateTime>())
             .Returns(new List<UsageEntry>
@@ -41,7 +38,7 @@ public class UsageReportServiceTests
                 new() { ProgNo = "TOL010", ProgName = "刀具基本資料", UsageMinutes = 45.0m, Count = 10 }
             });
 
-        var result = await _sut.QueryAllAsync();
+        var result = await _sut.QueryAllAsync(profiles);
 
         Assert.Equal(3, result.Rows.Count);
         Assert.Empty(result.FailedConnections);
@@ -57,7 +54,6 @@ public class UsageReportServiceTests
             new() { Name = "Gma-Staging", Server = "1.1.1.1", Database = "gma", Username = "u", Password = "p" },
             new() { Name = "Bad-Staging", Server = "0.0.0.0", Database = "bad", Username = "u", Password = "p" }
         };
-        _connectionSource.LoadAllConnections().Returns(profiles);
 
         _usageQuery.QueryUsageAsync(profiles[0], Arg.Any<DateTime>(), Arg.Any<DateTime>())
             .Returns(new List<UsageEntry>
@@ -67,7 +63,7 @@ public class UsageReportServiceTests
         _usageQuery.QueryUsageAsync(profiles[1], Arg.Any<DateTime>(), Arg.Any<DateTime>())
             .ThrowsAsync(new Exception("Connection failed"));
 
-        var result = await _sut.QueryAllAsync();
+        var result = await _sut.QueryAllAsync(profiles);
 
         Assert.Single(result.Rows);
         Assert.Single(result.FailedConnections);
@@ -81,11 +77,10 @@ public class UsageReportServiceTests
         {
             new() { Name = "Empty-Staging", Server = "1.1.1.1", Database = "empty", Username = "u", Password = "p" }
         };
-        _connectionSource.LoadAllConnections().Returns(profiles);
         _usageQuery.QueryUsageAsync(profiles[0], Arg.Any<DateTime>(), Arg.Any<DateTime>())
             .Returns(new List<UsageEntry>());
 
-        var result = await _sut.QueryAllAsync();
+        var result = await _sut.QueryAllAsync(profiles);
 
         Assert.Empty(result.Rows);
         Assert.Single(result.SkippedConnections);
@@ -99,14 +94,13 @@ public class UsageReportServiceTests
         {
             new() { Name = "Gma-Staging", Server = "1.1.1.1", Database = "gma", Username = "u", Password = "p" }
         };
-        _connectionSource.LoadAllConnections().Returns(profiles);
         _usageQuery.QueryUsageAsync(profiles[0], Arg.Any<DateTime>(), Arg.Any<DateTime>())
             .Returns(new List<UsageEntry>());
 
         var messages = new List<string>();
         var progress = new Progress<string>(msg => messages.Add(msg));
 
-        await _sut.QueryAllAsync(progress);
+        await _sut.QueryAllAsync(profiles, progress);
         await Task.Delay(100);
 
         Assert.NotEmpty(messages);
@@ -119,11 +113,10 @@ public class UsageReportServiceTests
         {
             new() { Name = "Gma-Staging", Server = "1.1.1.1", Database = "gma", Username = "u", Password = "p" }
         };
-        _connectionSource.LoadAllConnections().Returns(profiles);
         _usageQuery.QueryUsageAsync(Arg.Any<ConnectionProfile>(), Arg.Any<DateTime>(), Arg.Any<DateTime>())
             .Returns(new List<UsageEntry>());
 
-        await _sut.QueryAllAsync();
+        await _sut.QueryAllAsync(profiles);
 
         await _usageQuery.Received(1).QueryUsageAsync(
             profiles[0],

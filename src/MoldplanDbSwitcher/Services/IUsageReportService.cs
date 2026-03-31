@@ -4,6 +4,8 @@ namespace MoldplanDbSwitcher.Services;
 
 public interface IUsageReportService
 {
-    Task<UsageReportData> QueryAllAsync(IProgress<string>? progress = null);
+    Task<UsageReportData> QueryAllAsync(
+        IReadOnlyList<ConnectionProfile> profiles,
+        IProgress<string>? progress = null);
     Task ExportToExcelAsync(string path, UsageReportData data);
 }
