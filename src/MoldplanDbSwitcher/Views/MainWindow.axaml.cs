@@ -16,15 +16,18 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
+    private Func<Task<ReportSourceOptions?>> CreateReportSourceCallback() =>
+        async () =>
+        {
+            var dialog = new ReportSourceDialog();
+            return await dialog.ShowDialog<ReportSourceOptions?>(this);
+        };
+
     private async void OnExportFeatureReportClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is MainWindowViewModel vm)
         {
-            vm.ReportSourceCallback = async () =>
-            {
-                var dialog = new ReportSourceDialog();
-                return await dialog.ShowDialog<ReportSourceOptions?>(this);
-            };
+            vm.ReportSourceCallback = CreateReportSourceCallback();
             vm.SaveFileCallback = async () =>
             {
                 var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -47,11 +50,7 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainWindowViewModel vm)
         {
-            vm.ReportSourceCallback = async () =>
-            {
-                var dialog = new ReportSourceDialog();
-                return await dialog.ShowDialog<ReportSourceOptions?>(this);
-            };
+            vm.ReportSourceCallback = CreateReportSourceCallback();
             vm.SaveUsageReportCallback = async () =>
             {
                 var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
