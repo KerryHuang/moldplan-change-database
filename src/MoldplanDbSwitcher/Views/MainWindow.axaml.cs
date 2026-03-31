@@ -55,13 +55,13 @@ public partial class MainWindow : Window
             {
                 var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                 {
-                    Title = "儲存使用工時統計",
+                    Title = "儲存使用次數統計",
                     DefaultExtension = "xlsx",
                     FileTypeChoices = new[]
                     {
                         new FilePickerFileType("Excel 檔案") { Patterns = new[] { "*.xlsx" } }
                     },
-                    SuggestedFileName = "系統功能使用工時統計表"
+                    SuggestedFileName = "系統功能使用次數統計表"
                 });
                 return file?.Path.LocalPath;
             };
