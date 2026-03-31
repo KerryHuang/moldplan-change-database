@@ -7,7 +7,7 @@ namespace MoldplanDbSwitcher.Tests.Models;
 public class ConnectionProfileTests
 {
     [Fact]
-    public void Deserialize_TableSpecFormat_ReadsCorrectly()
+    public void Deserialize_SpecuraiFormat_ReadsCorrectly()
     {
         var json = """
         {

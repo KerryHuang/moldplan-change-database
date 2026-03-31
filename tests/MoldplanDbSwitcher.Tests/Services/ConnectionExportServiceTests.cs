@@ -131,7 +131,7 @@ public class ConnectionExportServiceTests
     [Fact]
     public void ImportFromJson_PascalCaseProperties_ParsesCorrectly()
     {
-        // TableSpec 匯出的 JSON 使用 PascalCase 屬性名
+        // Specurai 匯出的 JSON 使用 PascalCase 屬性名
         var json = """
         {
             "Version": 1,
