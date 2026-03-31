@@ -1,15 +1,16 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.ViewModels;
 
 namespace MoldplanDbSwitcher.Views;
 
 public partial class ReportSourceDialog : Window
 {
-    public ReportSourceDialog()
+    public ReportSourceDialog(ReportSourceOptions available)
     {
         InitializeComponent();
-        DataContext = new ReportSourceDialogViewModel();
+        DataContext = new ReportSourceDialogViewModel(available);
     }
 
     private void OnConfirmClick(object? sender, RoutedEventArgs e)

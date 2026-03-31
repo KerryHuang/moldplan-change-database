@@ -78,6 +78,12 @@ public partial class MainWindowViewModel : ObservableObject
     public IReadOnlyList<ConnectionProfile> GetCustomConnections()
         => Connections.Where(c => c.Source == "Custom").ToList();
 
+    public ReportSourceOptions GetAvailableSources() => new(
+        Specurai: Connections.Any(c => c.Source == "Specurai"),
+        Custom: Connections.Any(c => c.Source == "Custom"),
+        AnsibleProduction: Connections.Any(c => c.Source == "Ansible" && c.Name.EndsWith("- 正式")),
+        AnsibleStaging: Connections.Any(c => c.Source == "Ansible" && c.Name.EndsWith("- 測試")));
+
     public IReadOnlyList<ConnectionProfile> FilterConnectionsForReport(ReportSourceOptions options)
         => Connections.Where(c =>
             (options.Specurai && c.Source == "Specurai") ||
