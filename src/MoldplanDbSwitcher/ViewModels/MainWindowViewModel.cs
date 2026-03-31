@@ -16,6 +16,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IConnectionExportService _connectionExportService;
     private readonly IUsageReportService _usageReportService;
     private readonly IAnsibleSyncService _ansibleSyncService;
+    private readonly IAppSettingsService _appSettingsService;
     private List<ConnectionProfile> _ansibleConnections = [];
 
     [ObservableProperty]
@@ -48,6 +49,14 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _isSyncingAnsible;
 
+    public bool CanSyncAnsible =>
+        !IsSyncingAnsible &&
+        !string.IsNullOrWhiteSpace(_appSettingsService.Load().AnsibleRepoPath);
+
+    partial void OnIsSyncingAnsibleChanged(bool value) => OnPropertyChanged(nameof(CanSyncAnsible));
+
+    public void NotifyCanSyncAnsibleChanged() => OnPropertyChanged(nameof(CanSyncAnsible));
+
     [ObservableProperty]
     private bool _isExporting;
 
@@ -75,7 +84,8 @@ public partial class MainWindowViewModel : ObservableObject
         IFeatureReportService featureReportService,
         IConnectionExportService connectionExportService,
         IUsageReportService usageReportService,
-        IAnsibleSyncService ansibleSyncService)
+        IAnsibleSyncService ansibleSyncService,
+        IAppSettingsService appSettingsService)
     {
         _connectionSource = connectionSource;
         _serverTxtService = serverTxtService;
@@ -84,6 +94,7 @@ public partial class MainWindowViewModel : ObservableObject
         _connectionExportService = connectionExportService;
         _usageReportService = usageReportService;
         _ansibleSyncService = ansibleSyncService;
+        _appSettingsService = appSettingsService;
 
         LoadConnections();
         DiscoverServerTxtFiles();

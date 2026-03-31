@@ -34,7 +34,8 @@
       <Button Content="重新整理" Command="{Binding RefreshAllCommand}" Margin="16,0,0,0" />
       <Button Content="同步 Ansible"
               Command="{Binding SyncAnsibleCommand}"
-              IsEnabled="{Binding !IsSyncingAnsible}" />
+              IsEnabled="{Binding CanSyncAnsible}"
+              ToolTip.Tip="請先至「設定」填入 deploy-ansible Repo 路徑" />
     </StackPanel>
 
     <!-- 底部：狀態列與操作按鈕 -->

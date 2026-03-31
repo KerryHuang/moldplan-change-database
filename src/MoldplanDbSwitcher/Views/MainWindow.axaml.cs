@@ -82,6 +82,9 @@ public partial class MainWindow : Window
     {
         var dialog = new SettingsDialog(App.Services!.GetRequiredService<IAppSettingsService>());
         await dialog.ShowDialog(this);
+        // 設定儲存後刷新同步按鈕狀態
+        if (DataContext is MainWindowViewModel vm)
+            vm.NotifyCanSyncAnsibleChanged();
     }
 
     private async void OnExportConnectionsClick(object? sender, RoutedEventArgs e)

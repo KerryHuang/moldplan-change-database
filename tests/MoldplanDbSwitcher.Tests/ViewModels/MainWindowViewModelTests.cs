@@ -16,6 +16,7 @@ public class MainWindowViewModelTests
     private readonly IConnectionExportService _connectionExportService;
     private readonly IUsageReportService _usageReportService;
     private readonly IAnsibleSyncService _ansibleSyncService;
+    private readonly IAppSettingsService _appSettingsService;
 
     public MainWindowViewModelTests()
     {
@@ -26,6 +27,8 @@ public class MainWindowViewModelTests
         _connectionExportService = Substitute.For<IConnectionExportService>();
         _usageReportService = Substitute.For<IUsageReportService>();
         _ansibleSyncService = Substitute.For<IAnsibleSyncService>();
+        _appSettingsService = Substitute.For<IAppSettingsService>();
+        _appSettingsService.Load().Returns(new AppSettings());
 
         _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
         {
@@ -38,7 +41,7 @@ public class MainWindowViewModelTests
     private MainWindowViewModel CreateVm() => new(
         _connectionSource, _serverTxtService, _settingsService,
         _featureReportService, _connectionExportService, _usageReportService,
-        _ansibleSyncService);
+        _ansibleSyncService, _appSettingsService);
 
     [Fact]
     public void Constructor_LoadsConnections()
