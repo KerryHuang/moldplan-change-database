@@ -125,6 +125,7 @@ public class MainWindowViewModelTests
             .Returns(new FeatureReportData());
 
         var vm = CreateVm();
+        vm.ReportSourceCallback = () => Task.FromResult<ReportSourceOptions?>(ReportSourceOptions.AllSelected);
         // 設定 SaveFileCallback 以避免 null
         vm.SaveFileCallback = () => Task.FromResult<string?>(Path.GetTempFileName());
 
@@ -140,6 +141,7 @@ public class MainWindowViewModelTests
             .Returns(new FeatureReportData());
 
         var vm = CreateVm();
+        vm.ReportSourceCallback = () => Task.FromResult<ReportSourceOptions?>(ReportSourceOptions.AllSelected);
         vm.SaveFileCallback = () => Task.FromResult<string?>(null);
 
         await vm.ExportFeatureReportCommand.ExecuteAsync(null);
@@ -177,10 +179,59 @@ public class MainWindowViewModelTests
             .Returns(reportData);
 
         var vm = CreateVm();
+        vm.ReportSourceCallback = () => Task.FromResult<ReportSourceOptions?>(ReportSourceOptions.AllSelected);
         vm.SaveFileCallback = () => Task.FromResult<string?>(Path.GetTempFileName());
 
         await vm.ExportFeatureReportCommand.ExecuteAsync(null);
 
         Assert.Contains("失敗", vm.StatusMessage);
+    }
+
+    [Fact]
+    public void FilterConnectionsForReport_SpecuraiOnly_ReturnsOnlySpecurai()
+    {
+        var vm = CreateVm();
+        var options = new ReportSourceOptions(Specurai: true, Custom: false, AnsibleProduction: false, AnsibleStaging: false);
+
+        var result = vm.FilterConnectionsForReport(options);
+
+        Assert.All(result, c => Assert.Equal("Specurai", c.Source));
+    }
+
+    [Fact]
+    public void FilterConnectionsForReport_NoneSelected_ReturnsEmpty()
+    {
+        var vm = CreateVm();
+        var options = new ReportSourceOptions(Specurai: false, Custom: false, AnsibleProduction: false, AnsibleStaging: false);
+
+        var result = vm.FilterConnectionsForReport(options);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task ExportFeatureReport_SourceCallbackReturnsNull_DoesNotQuery()
+    {
+        var vm = CreateVm();
+        vm.ReportSourceCallback = () => Task.FromResult<ReportSourceOptions?>(null);
+        vm.SaveFileCallback = () => Task.FromResult<string?>(Path.GetTempFileName());
+
+        await vm.ExportFeatureReportCommand.ExecuteAsync(null);
+
+        await _featureReportService.DidNotReceive().QueryAllCustomerFeaturesAsync(
+            Arg.Any<IReadOnlyList<ConnectionProfile>>(), Arg.Any<IProgress<string>>());
+    }
+
+    [Fact]
+    public async Task ExportUsageReport_SourceCallbackReturnsNull_DoesNotQuery()
+    {
+        var vm = CreateVm();
+        vm.ReportSourceCallback = () => Task.FromResult<ReportSourceOptions?>(null);
+        vm.SaveUsageReportCallback = () => Task.FromResult<string?>(Path.GetTempFileName());
+
+        await vm.ExportUsageReportCommand.ExecuteAsync(null);
+
+        await _usageReportService.DidNotReceive().QueryAllAsync(
+            Arg.Any<IReadOnlyList<ConnectionProfile>>(), Arg.Any<IProgress<string>>());
     }
 }

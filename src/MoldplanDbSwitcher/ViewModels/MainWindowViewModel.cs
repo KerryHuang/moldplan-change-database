@@ -65,6 +65,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public Func<Task<string?>>? SaveFileCallback { get; set; }
     public Func<Task<string?>>? SaveUsageReportCallback { get; set; }
+    public Func<Task<ReportSourceOptions?>>? ReportSourceCallback { get; set; }
 
     public IConnectionExportService ConnectionExportService => _connectionExportService;
     public ISettingsService SettingsServicePublic => _settingsService;
@@ -76,6 +77,14 @@ public partial class MainWindowViewModel : ObservableObject
 
     public IReadOnlyList<ConnectionProfile> GetCustomConnections()
         => Connections.Where(c => c.Source == "Custom").ToList();
+
+    public IReadOnlyList<ConnectionProfile> FilterConnectionsForReport(ReportSourceOptions options)
+        => Connections.Where(c =>
+            (options.Specurai && c.Source == "Specurai") ||
+            (options.Custom && c.Source == "Custom") ||
+            (options.AnsibleProduction && c.Source == "Ansible" && c.Name.EndsWith("- 正式")) ||
+            (options.AnsibleStaging && c.Source == "Ansible" && c.Name.EndsWith("- 測試"))
+        ).ToList();
 
     public MainWindowViewModel(
         IConnectionSourceService connectionSource,
@@ -220,8 +229,24 @@ public partial class MainWindowViewModel : ObservableObject
 
         try
         {
+            var sourceOptions = ReportSourceCallback != null
+                ? await ReportSourceCallback()
+                : ReportSourceOptions.AllSelected;
+
+            if (sourceOptions is null)
+            {
+                StatusMessage = "已取消匯出";
+                return;
+            }
+
+            var profiles = FilterConnectionsForReport(sourceOptions);
+            if (profiles.Count == 0)
+            {
+                StatusMessage = "未選擇任何連線來源";
+                return;
+            }
+
             var progress = new Progress<string>(msg => ProgressText = msg);
-            var profiles = _connectionSource.LoadAllConnections();
             var data = await _featureReportService.QueryAllCustomerFeaturesAsync(profiles, progress);
 
             if (data.Customers.Count == 0)
@@ -266,8 +291,24 @@ public partial class MainWindowViewModel : ObservableObject
 
         try
         {
+            var sourceOptions = ReportSourceCallback != null
+                ? await ReportSourceCallback()
+                : ReportSourceOptions.AllSelected;
+
+            if (sourceOptions is null)
+            {
+                StatusMessage = "已取消匯出";
+                return;
+            }
+
+            var profiles = FilterConnectionsForReport(sourceOptions);
+            if (profiles.Count == 0)
+            {
+                StatusMessage = "未選擇任何連線來源";
+                return;
+            }
+
             var progress = new Progress<string>(msg => ProgressText = msg);
-            var profiles = _connectionSource.LoadAllConnections();
             var data = await _usageReportService.QueryAllAsync(profiles, progress);
 
             if (data.Rows.Count == 0)
