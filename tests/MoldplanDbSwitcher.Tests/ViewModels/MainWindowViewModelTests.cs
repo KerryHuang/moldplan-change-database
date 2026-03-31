@@ -2,6 +2,7 @@ using Xunit;
 using NSubstitute;
 using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.Services;
+using MoldplanDbSwitcher.Services.AnsibleSync;
 using MoldplanDbSwitcher.ViewModels;
 
 namespace MoldplanDbSwitcher.Tests.ViewModels;
@@ -14,6 +15,7 @@ public class MainWindowViewModelTests
     private readonly IFeatureReportService _featureReportService;
     private readonly IConnectionExportService _connectionExportService;
     private readonly IUsageReportService _usageReportService;
+    private readonly IAnsibleSyncService _ansibleSyncService;
 
     public MainWindowViewModelTests()
     {
@@ -23,6 +25,7 @@ public class MainWindowViewModelTests
         _featureReportService = Substitute.For<IFeatureReportService>();
         _connectionExportService = Substitute.For<IConnectionExportService>();
         _usageReportService = Substitute.For<IUsageReportService>();
+        _ansibleSyncService = Substitute.For<IAnsibleSyncService>();
 
         _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
         {
@@ -34,7 +37,8 @@ public class MainWindowViewModelTests
 
     private MainWindowViewModel CreateVm() => new(
         _connectionSource, _serverTxtService, _settingsService,
-        _featureReportService, _connectionExportService, _usageReportService);
+        _featureReportService, _connectionExportService, _usageReportService,
+        _ansibleSyncService);
 
     [Fact]
     public void Constructor_LoadsConnections()

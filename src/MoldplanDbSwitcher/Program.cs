@@ -1,6 +1,7 @@
 using Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using MoldplanDbSwitcher.Services;
+using MoldplanDbSwitcher.Services.AnsibleSync;
 using MoldplanDbSwitcher.ViewModels;
 
 namespace MoldplanDbSwitcher;
@@ -28,6 +29,7 @@ class Program
         services.AddSingleton<IUsageQueryService, UsageQueryService>();
         services.AddSingleton<IUsageReportService, UsageReportService>();
         services.AddSingleton<IConnectionExportService, ConnectionExportService>();
+        services.AddSingleton<IAnsibleSyncService, AnsibleSyncService>();
         services.AddTransient<MainWindowViewModel>();
     }
 

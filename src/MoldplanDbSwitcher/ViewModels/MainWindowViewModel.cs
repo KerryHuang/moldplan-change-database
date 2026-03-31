@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.Services;
+using MoldplanDbSwitcher.Services.AnsibleSync;
 
 namespace MoldplanDbSwitcher.ViewModels;
 
@@ -14,6 +15,8 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IFeatureReportService _featureReportService;
     private readonly IConnectionExportService _connectionExportService;
     private readonly IUsageReportService _usageReportService;
+    private readonly IAnsibleSyncService _ansibleSyncService;
+    private List<ConnectionProfile> _ansibleConnections = [];
 
     [ObservableProperty]
     private ObservableCollection<ConnectionProfile> _connections = [];
@@ -40,6 +43,12 @@ public partial class MainWindowViewModel : ObservableObject
     private bool _showCustom = true;
 
     [ObservableProperty]
+    private bool _showAnsible = true;
+
+    [ObservableProperty]
+    private bool _isSyncingAnsible;
+
+    [ObservableProperty]
     private bool _isExporting;
 
     [ObservableProperty]
@@ -52,7 +61,9 @@ public partial class MainWindowViewModel : ObservableObject
     public ISettingsService SettingsServicePublic => _settingsService;
 
     public IReadOnlyList<ConnectionProfile> GetConnectionsForExport()
-        => Connections.Where(c => c.Source == "Custom").ToList();
+        => Connections
+            .Where(c => c.Source is "Custom" or "Ansible")
+            .ToList();
 
     public IReadOnlyList<ConnectionProfile> GetCustomConnections()
         => Connections.Where(c => c.Source == "Custom").ToList();
@@ -63,7 +74,8 @@ public partial class MainWindowViewModel : ObservableObject
         ISettingsService settingsService,
         IFeatureReportService featureReportService,
         IConnectionExportService connectionExportService,
-        IUsageReportService usageReportService)
+        IUsageReportService usageReportService,
+        IAnsibleSyncService ansibleSyncService)
     {
         _connectionSource = connectionSource;
         _serverTxtService = serverTxtService;
@@ -71,6 +83,7 @@ public partial class MainWindowViewModel : ObservableObject
         _featureReportService = featureReportService;
         _connectionExportService = connectionExportService;
         _usageReportService = usageReportService;
+        _ansibleSyncService = ansibleSyncService;
 
         LoadConnections();
         DiscoverServerTxtFiles();
@@ -83,6 +96,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     partial void OnShowSpecuraiChanged(bool value) => LoadConnections();
     partial void OnShowCustomChanged(bool value) => LoadConnections();
+    partial void OnShowAnsibleChanged(bool value) => LoadConnections();
 
     [RelayCommand]
     private void LoadConnections()
@@ -92,9 +106,32 @@ public partial class MainWindowViewModel : ObservableObject
             all.AddRange(_connectionSource.LoadSpecuraiConnections());
         if (ShowCustom)
             all.AddRange(_connectionSource.LoadCustomConnections());
+        if (ShowAnsible)
+            all.AddRange(_ansibleConnections);
 
         Connections = new ObservableCollection<ConnectionProfile>(all);
         SelectedConnection = Connections.FirstOrDefault();
+    }
+
+    [RelayCommand]
+    private async Task SyncAnsible()
+    {
+        IsSyncingAnsible = true;
+        StatusMessage = "正在從 Ansible 同步連線...";
+        try
+        {
+            _ansibleConnections = await _ansibleSyncService.SyncAsync();
+            LoadConnections();
+            StatusMessage = $"已同步 {_ansibleConnections.Count} 個 Ansible 連線";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"同步失敗：{ex.Message}";
+        }
+        finally
+        {
+            IsSyncingAnsible = false;
+        }
     }
 
     [RelayCommand]
