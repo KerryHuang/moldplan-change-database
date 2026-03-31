@@ -4,7 +4,7 @@
         x:Class="MoldplanDbSwitcher.Views.ReportSourceDialog"
         x:DataType="vm:ReportSourceDialogViewModel"
         Title="選擇報表來源"
-        Width="280" Height="220"
+        Width="280" Height="270"
         WindowStartupLocation="CenterOwner"
         CanResize="False">
 
