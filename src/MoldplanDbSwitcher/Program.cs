@@ -21,6 +21,7 @@ class Program
     private static void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<IAppSettingsService, AppSettingsService>();
         services.AddSingleton<IConnectionSourceService, ConnectionSourceService>();
         services.AddSingleton<IServerTxtService, ServerTxtService>();
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
