@@ -16,12 +16,13 @@
         <MenuItem Header="匯出連線設定(_X)" Click="OnExportConnectionsClick" />
         <MenuItem Header="匯入連線設定(_I)" Click="OnImportConnectionsClick" />
         <Separator />
-        <MenuItem Header="匯出功能差異表(_R)" Click="OnExportFeatureReportClick"
+        <MenuItem Header="設定(_S)" Click="OnSettingsClick" />
+      </MenuItem>
+      <MenuItem Header="報表(_R)">
+        <MenuItem Header="匯出功能差異表(_F)" Click="OnExportFeatureReportClick"
                   IsEnabled="{Binding !IsExporting}" />
         <MenuItem Header="匯出使用工時統計(_U)" Click="OnExportUsageReportClick"
                   IsEnabled="{Binding !IsExporting}" />
-        <Separator />
-        <MenuItem Header="設定(_S)" Click="OnSettingsClick" />
       </MenuItem>
     </Menu>
 
