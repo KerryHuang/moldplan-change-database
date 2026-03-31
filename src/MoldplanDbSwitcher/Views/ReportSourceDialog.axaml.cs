@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.ViewModels;
 
 namespace MoldplanDbSwitcher.Views;
