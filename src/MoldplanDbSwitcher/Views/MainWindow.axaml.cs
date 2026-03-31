@@ -20,6 +20,11 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainWindowViewModel vm)
         {
+            vm.ReportSourceCallback = async () =>
+            {
+                var dialog = new ReportSourceDialog();
+                return await dialog.ShowDialog<ReportSourceOptions?>(this);
+            };
             vm.SaveFileCallback = async () =>
             {
                 var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -42,6 +47,11 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainWindowViewModel vm)
         {
+            vm.ReportSourceCallback = async () =>
+            {
+                var dialog = new ReportSourceDialog();
+                return await dialog.ShowDialog<ReportSourceOptions?>(this);
+            };
             vm.SaveUsageReportCallback = async () =>
             {
                 var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
