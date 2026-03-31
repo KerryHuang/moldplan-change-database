@@ -1,5 +1,6 @@
 using System.IO;
 using Avalonia.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using MoldplanDbSwitcher.Models;
@@ -75,6 +76,12 @@ public partial class MainWindow : Window
         {
             vm.DeleteCustomConnection(profile);
         }
+    }
+
+    private async void OnSettingsClick(object? sender, RoutedEventArgs e)
+    {
+        var dialog = new SettingsDialog(App.Services!.GetRequiredService<IAppSettingsService>());
+        await dialog.ShowDialog(this);
     }
 
     private async void OnExportConnectionsClick(object? sender, RoutedEventArgs e)

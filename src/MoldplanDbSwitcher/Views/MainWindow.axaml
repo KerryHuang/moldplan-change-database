@@ -20,6 +20,8 @@
                   IsEnabled="{Binding !IsExporting}" />
         <MenuItem Header="匯出使用工時統計(_U)" Click="OnExportUsageReportClick"
                   IsEnabled="{Binding !IsExporting}" />
+        <Separator />
+        <MenuItem Header="設定(_S)" Click="OnSettingsClick" />
       </MenuItem>
     </Menu>
 
@@ -28,7 +30,11 @@
       <TextBlock Text="連線來源：" VerticalAlignment="Center" />
       <CheckBox Content="Specurai" IsChecked="{Binding ShowSpecurai}" />
       <CheckBox Content="自訂" IsChecked="{Binding ShowCustom}" />
+      <CheckBox Content="Ansible" IsChecked="{Binding ShowAnsible}" />
       <Button Content="重新整理" Command="{Binding RefreshAllCommand}" Margin="16,0,0,0" />
+      <Button Content="同步 Ansible"
+              Command="{Binding SyncAnsibleCommand}"
+              IsEnabled="{Binding !IsSyncingAnsible}" />
     </StackPanel>
 
     <!-- 底部：狀態列與操作按鈕 -->
