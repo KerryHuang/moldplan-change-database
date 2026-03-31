@@ -54,6 +54,6 @@ public class VaultDecryptorTests
         var result = VaultDecryptor.Decrypt(content, password);
 
         Assert.Contains("vault_db_main_password", result);
-        Assert.Contains("ZUjWQ7zrE8uYvXfC", result);
+        Assert.Contains("vault_db_container_password", result);
     }
 }

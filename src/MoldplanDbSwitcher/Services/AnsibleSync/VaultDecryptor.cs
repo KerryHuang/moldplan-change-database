@@ -12,7 +12,7 @@ public static class VaultDecryptor
         var lines = vaultContent.Trim().Split('\n', StringSplitOptions.TrimEntries);
 
         if (lines.Length < 2 || lines[0] != Header)
-            throw new InvalidOperationException($"不支援的 Vault 格式：{lines[0]}");
+            throw new InvalidOperationException("不支援的 Vault 格式，僅支援 $ANSIBLE_VAULT;1.1;AES256");
 
         // 合併 hex 行並解碼
         var hexData = string.Concat(lines[1..]);
@@ -48,6 +48,9 @@ public static class VaultDecryptor
         var plaintext = AesCtr(key, iv, ciphertext);
 
         // 去除 PKCS7 padding
+        // 注意：若 padding 無效，不丟例外。HMAC 已確保資料完整性，
+        // padding 去除僅為清理用途；Ansible vault 固定使用 PKCS7 padding，
+        // 若此處條件不符表示資料異常，但 HMAC 已通過，保留原始資料即可。
         var pad = plaintext[^1];
         if (pad > 0 && pad <= 16 && plaintext[^pad..].All(b => b == pad))
             plaintext = plaintext[..^pad];
