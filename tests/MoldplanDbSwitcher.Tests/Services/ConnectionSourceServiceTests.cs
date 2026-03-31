@@ -17,9 +17,9 @@ public class ConnectionSourceServiceTests
     }
 
     [Fact]
-    public void LoadTableSpecConnections_NoFile_ReturnsEmpty()
+    public void LoadSpecuraiConnections_NoFile_ReturnsEmpty()
     {
-        var result = _service.LoadTableSpecConnections();
+        var result = _service.LoadSpecuraiConnections();
         Assert.Empty(result);
     }
 
@@ -51,9 +51,9 @@ public class ConnectionSourceServiceTests
     }
 
     [Fact]
-    public void LoadTableSpecConnections_ValidFile_SetsSourceToTableSpec()
+    public void LoadSpecuraiConnections_ValidFile_SetsSourceToSpecurai()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), "TableSpecTest_" + Guid.NewGuid());
+        var tempDir = Path.Combine(Path.GetTempPath(), "SpecuraiTest_" + Guid.NewGuid());
         Directory.CreateDirectory(tempDir);
         var tempPath = Path.Combine(tempDir, "connections.json");
         File.WriteAllText(tempPath, """
@@ -67,10 +67,10 @@ public class ConnectionSourceServiceTests
         try
         {
             var service = new ConnectionSourceService(_settingsService, tempPath);
-            var result = service.LoadTableSpecConnections();
+            var result = service.LoadSpecuraiConnections();
 
             Assert.Single(result);
-            Assert.Equal("TableSpec", result[0].Source);
+            Assert.Equal("Specurai", result[0].Source);
             Assert.Equal("dev", result[0].Name);
         }
         finally
@@ -80,9 +80,9 @@ public class ConnectionSourceServiceTests
     }
 
     [Fact]
-    public void LoadTableSpecConnections_PascalCaseJson_ReadsCorrectly()
+    public void LoadSpecuraiConnections_PascalCaseJson_ReadsCorrectly()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), "TableSpecPascal_" + Guid.NewGuid());
+        var tempDir = Path.Combine(Path.GetTempPath(), "SpecuraiPascal_" + Guid.NewGuid());
         Directory.CreateDirectory(tempDir);
         var tempPath = Path.Combine(tempDir, "connections.json");
         File.WriteAllText(tempPath, """
@@ -97,7 +97,7 @@ public class ConnectionSourceServiceTests
         try
         {
             var service = new ConnectionSourceService(_settingsService, tempPath);
-            var result = service.LoadTableSpecConnections();
+            var result = service.LoadSpecuraiConnections();
 
             Assert.Single(result);
             Assert.Equal("WDMIS", result[0].Name);

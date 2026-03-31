@@ -4,7 +4,7 @@ namespace MoldplanDbSwitcher.Services;
 
 public interface IConnectionSourceService
 {
-    List<ConnectionProfile> LoadTableSpecConnections();
+    List<ConnectionProfile> LoadSpecuraiConnections();
     List<ConnectionProfile> LoadCustomConnections();
     List<ConnectionProfile> LoadAllConnections();
 }

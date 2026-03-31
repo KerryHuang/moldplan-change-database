@@ -6,30 +6,30 @@ namespace MoldplanDbSwitcher.Services;
 public class ConnectionSourceService : IConnectionSourceService
 {
     private readonly ISettingsService _settingsService;
-    private readonly string _tableSpecPath;
+    private readonly string _specuraiPath;
 
     public ConnectionSourceService(ISettingsService settingsService)
         : this(settingsService, Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "TableSpec",
+            "Specurai",
             "connections.json"))
     {
     }
 
-    public ConnectionSourceService(ISettingsService settingsService, string tableSpecPath)
+    public ConnectionSourceService(ISettingsService settingsService, string specuraiPath)
     {
         _settingsService = settingsService;
-        _tableSpecPath = tableSpecPath;
+        _specuraiPath = specuraiPath;
     }
 
-    public List<ConnectionProfile> LoadTableSpecConnections()
+    public List<ConnectionProfile> LoadSpecuraiConnections()
     {
-        if (!File.Exists(_tableSpecPath))
+        if (!File.Exists(_specuraiPath))
             return [];
 
         try
         {
-            var json = File.ReadAllText(_tableSpecPath);
+            var json = File.ReadAllText(_specuraiPath);
             var data = JsonSerializer.Deserialize<ConnectionsFile>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -37,7 +37,7 @@ public class ConnectionSourceService : IConnectionSourceService
             if (data?.Profiles is null) return [];
 
             foreach (var p in data.Profiles)
-                p.Source = "TableSpec";
+                p.Source = "Specurai";
 
             return data.Profiles;
         }
@@ -58,7 +58,7 @@ public class ConnectionSourceService : IConnectionSourceService
     public List<ConnectionProfile> LoadAllConnections()
     {
         var all = new List<ConnectionProfile>();
-        all.AddRange(LoadTableSpecConnections());
+        all.AddRange(LoadSpecuraiConnections());
         all.AddRange(LoadCustomConnections());
         return all;
     }

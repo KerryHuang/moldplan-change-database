@@ -24,9 +24,9 @@ public class MainWindowViewModelTests
         _connectionExportService = Substitute.For<IConnectionExportService>();
         _usageReportService = Substitute.For<IUsageReportService>();
 
-        _connectionSource.LoadTableSpecConnections().Returns(new List<ConnectionProfile>
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
         {
-            new() { Name = "dev", Server = "127.0.0.1", Database = "mis", Source = "TableSpec" }
+            new() { Name = "dev", Server = "127.0.0.1", Database = "mis", Source = "Specurai" }
         });
         _connectionSource.LoadCustomConnections().Returns(new List<ConnectionProfile>());
         _serverTxtService.DiscoverPaths().Returns(new List<string>());
@@ -55,7 +55,7 @@ public class MainWindowViewModelTests
     [Fact]
     public void ApplyChanges_NoSelection_SetsErrorStatus()
     {
-        _connectionSource.LoadTableSpecConnections().Returns(new List<ConnectionProfile>());
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>());
         var vm = CreateVm();
         vm.SelectedConnection = null;
 
@@ -104,7 +104,7 @@ public class MainWindowViewModelTests
     public void DeleteCustomConnection_OnlyDeletesCustomSource()
     {
         var vm = CreateVm();
-        var tableSpecProfile = new ConnectionProfile { Id = "1", Name = "dev", Source = "TableSpec" };
+        var tableSpecProfile = new ConnectionProfile { Id = "1", Name = "dev", Source = "Specurai" };
 
         vm.DeleteCustomConnection(tableSpecProfile);
 
@@ -154,11 +154,11 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public void GetConnectionsForExport_ExcludesTableSpecConnections()
+    public void GetConnectionsForExport_ExcludesSpecuraiConnections()
     {
         var vm = CreateVm();
         var result = vm.GetConnectionsForExport();
-        Assert.Empty(result); // 只有 TableSpec 連線，應回傳空
+        Assert.Empty(result); // 只有 Specurai 連線，應回傳空
     }
 
     [Fact]

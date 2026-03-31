@@ -26,7 +26,7 @@
     <!-- 頂部：連線來源篩選 -->
     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="16" Margin="0,0,0,12">
       <TextBlock Text="連線來源：" VerticalAlignment="Center" />
-      <CheckBox Content="TableSpec" IsChecked="{Binding ShowTableSpec}" />
+      <CheckBox Content="Specurai" IsChecked="{Binding ShowSpecurai}" />
       <CheckBox Content="自訂" IsChecked="{Binding ShowCustom}" />
       <Button Content="重新整理" Command="{Binding RefreshAllCommand}" Margin="16,0,0,0" />
     </StackPanel>

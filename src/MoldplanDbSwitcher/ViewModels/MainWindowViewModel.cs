@@ -34,7 +34,7 @@ public partial class MainWindowViewModel : ObservableObject
     private string _statusMessage = string.Empty;
 
     [ObservableProperty]
-    private bool _showTableSpec = true;
+    private bool _showSpecurai = true;
 
     [ObservableProperty]
     private bool _showCustom = true;
@@ -81,15 +81,15 @@ public partial class MainWindowViewModel : ObservableObject
         UpdatePreview();
     }
 
-    partial void OnShowTableSpecChanged(bool value) => LoadConnections();
+    partial void OnShowSpecuraiChanged(bool value) => LoadConnections();
     partial void OnShowCustomChanged(bool value) => LoadConnections();
 
     [RelayCommand]
     private void LoadConnections()
     {
         var all = new List<ConnectionProfile>();
-        if (ShowTableSpec)
-            all.AddRange(_connectionSource.LoadTableSpecConnections());
+        if (ShowSpecurai)
+            all.AddRange(_connectionSource.LoadSpecuraiConnections());
         if (ShowCustom)
             all.AddRange(_connectionSource.LoadCustomConnections());
 
