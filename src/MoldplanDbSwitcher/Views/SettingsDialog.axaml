@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="MoldplanDbSwitcher.Views.SettingsDialog"
+        Title="設定"
+        Width="480"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+  <DockPanel Margin="16">
+
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+      <Button Content="儲存" Click="OnSaveClick" Classes="accent" />
+      <Button Content="取消" Click="OnCancelClick" />
+    </StackPanel>
+
+    <StackPanel Spacing="12">
+      <TextBlock Text="Ansible 連線設定" FontWeight="Bold" FontSize="14" />
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="deploy-ansible Repo 路徑：" />
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="瀏覽..." Click="OnBrowseRepoClick" Margin="8,0,0,0" />
+          <TextBox x:Name="AnsibleRepoPathBox" Watermark="例：/Users/alice/repos/deploy-ansible" />
+        </DockPanel>
+      </StackPanel>
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="Vault 密碼檔案路徑：" />
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="瀏覽..." Click="OnBrowseVaultPassClick" Margin="8,0,0,0" />
+          <TextBox x:Name="VaultPasswordFileBox" Watermark="預設：~/.ansible-vault-pass" />
+        </DockPanel>
+      </StackPanel>
+    </StackPanel>
+
+  </DockPanel>
+</Window>
