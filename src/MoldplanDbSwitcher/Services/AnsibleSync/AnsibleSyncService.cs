@@ -150,12 +150,11 @@ public class AnsibleSyncService : IAnsibleSyncService
 
         var username = isContainer ? "SA" : "mis";
         var password = isContainer
-            ? GetVaultVar(vaultVars, "vault_db_container_password", "service")
-            : GetVaultVar(vaultVars,
+            ? GetVaultVar(vaultVars, "service", "vault_db_container_password")
+            : GetVaultVar(vaultVars, "service",
                 "vault_db_main_password",
                 "vault_db_admin_password",
-                "vault_db_password",
-                "service");
+                "vault_db_password");
 
         var envLabel = env == "production" ? "正式" : "測試";
         var displayName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(customer.CustomerName);
@@ -229,14 +228,14 @@ public class AnsibleSyncService : IAnsibleSyncService
         return merged;
     }
 
-    private static string GetVaultVar(Dictionary<string, string> vars, params string[] keys)
+    private static string GetVaultVar(Dictionary<string, string> vars, string defaultValue, params string[] keys)
     {
         foreach (var key in keys)
         {
             if (vars.TryGetValue(key, out var val) && !string.IsNullOrEmpty(val))
                 return val;
         }
-        return keys[^1]; // 最後一個參數視為預設值
+        return defaultValue;
     }
 
     private class CustomerInfo
