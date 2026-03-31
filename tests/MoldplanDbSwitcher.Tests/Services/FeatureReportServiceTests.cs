@@ -8,15 +8,13 @@ namespace MoldplanDbSwitcher.Tests.Services;
 
 public class FeatureReportServiceTests
 {
-    private readonly IConnectionSourceService _connectionSource;
     private readonly IFeatureQueryService _featureQuery;
     private readonly FeatureReportService _sut;
 
     public FeatureReportServiceTests()
     {
-        _connectionSource = Substitute.For<IConnectionSourceService>();
         _featureQuery = Substitute.For<IFeatureQueryService>();
-        _sut = new FeatureReportService(_connectionSource, _featureQuery);
+        _sut = new FeatureReportService(_featureQuery);
     }
 
     [Fact]
@@ -27,7 +25,6 @@ public class FeatureReportServiceTests
             new() { Name = "Gma-Staging", Server = "1.1.1.1", Database = "gma-staging", Username = "u", Password = "p" },
             new() { Name = "WayDoSoft01-Test", Server = "2.2.2.2", Database = "wd01-test", Username = "u", Password = "p" }
         };
-        _connectionSource.LoadAllConnections().Returns(profiles);
 
         var gmaFeatures = new List<FeatureEntry>
         {
@@ -41,7 +38,7 @@ public class FeatureReportServiceTests
         _featureQuery.QueryFeaturesAsync(profiles[0]).Returns(gmaFeatures);
         _featureQuery.QueryFeaturesAsync(profiles[1]).Returns(wd01Features);
 
-        var result = await _sut.QueryAllCustomerFeaturesAsync();
+        var result = await _sut.QueryAllCustomerFeaturesAsync(profiles);
 
         Assert.Equal(2, result.Customers.Count);
         Assert.Equal("Gma", result.Customers[0].Code);
@@ -59,7 +56,6 @@ public class FeatureReportServiceTests
             new() { Name = "Gma-Staging", Server = "1.1.1.1", Database = "gma-staging", Username = "u", Password = "p" },
             new() { Name = "Bad-Staging", Server = "0.0.0.0", Database = "bad", Username = "u", Password = "p" }
         };
-        _connectionSource.LoadAllConnections().Returns(profiles);
 
         _featureQuery.QueryFeaturesAsync(profiles[0]).Returns(new List<FeatureEntry>
         {
@@ -67,7 +63,7 @@ public class FeatureReportServiceTests
         });
         _featureQuery.QueryFeaturesAsync(profiles[1]).ThrowsAsync(new Exception("Connection failed"));
 
-        var result = await _sut.QueryAllCustomerFeaturesAsync();
+        var result = await _sut.QueryAllCustomerFeaturesAsync(profiles);
 
         Assert.Single(result.Customers);
         Assert.Single(result.FailedConnections);
@@ -81,10 +77,9 @@ public class FeatureReportServiceTests
         {
             new() { Name = "Bad-Staging", Server = "0.0.0.0", Database = "bad", Username = "u", Password = "p" }
         };
-        _connectionSource.LoadAllConnections().Returns(profiles);
         _featureQuery.QueryFeaturesAsync(profiles[0]).ThrowsAsync(new Exception("fail"));
 
-        var result = await _sut.QueryAllCustomerFeaturesAsync();
+        var result = await _sut.QueryAllCustomerFeaturesAsync(profiles);
 
         Assert.Empty(result.Customers);
         Assert.Single(result.FailedConnections);
@@ -98,16 +93,14 @@ public class FeatureReportServiceTests
             new() { Name = "WDMIS", Server = "1.1.1.1", Database = "MoldPlanDataModel", Username = "u", Password = "p" },
             new() { Name = "Gma-Staging", Server = "2.2.2.2", Database = "gma-staging", Username = "u", Password = "p" }
         };
-        _connectionSource.LoadAllConnections().Returns(profiles);
 
-        // WDMIS 的 SYS013 為空
         _featureQuery.QueryFeaturesAsync(profiles[0]).Returns(new List<FeatureEntry>());
         _featureQuery.QueryFeaturesAsync(profiles[1]).Returns(new List<FeatureEntry>
         {
             new() { SysType = "刀具", ItemId = "TOL010", ItemDesc = "刀具", AppFile = "TOL010", OpenYn = "Y" }
         });
 
-        var result = await _sut.QueryAllCustomerFeaturesAsync();
+        var result = await _sut.QueryAllCustomerFeaturesAsync(profiles);
 
         Assert.Single(result.Customers);
         Assert.Equal("Gma", result.Customers[0].Code);
@@ -122,15 +115,13 @@ public class FeatureReportServiceTests
         {
             new() { Name = "Gma-Staging", Server = "1.1.1.1", Database = "gma", Username = "u", Password = "p" }
         };
-        _connectionSource.LoadAllConnections().Returns(profiles);
         _featureQuery.QueryFeaturesAsync(profiles[0]).Returns(new List<FeatureEntry>());
 
         var messages = new List<string>();
         var progress = new Progress<string>(msg => messages.Add(msg));
 
-        await _sut.QueryAllCustomerFeaturesAsync(progress);
+        await _sut.QueryAllCustomerFeaturesAsync(profiles, progress);
 
-        // Progress 是異步回調，給一點時間
         await Task.Delay(100);
         Assert.NotEmpty(messages);
     }

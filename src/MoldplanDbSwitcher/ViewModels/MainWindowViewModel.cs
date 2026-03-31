@@ -221,7 +221,8 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             var progress = new Progress<string>(msg => ProgressText = msg);
-            var data = await _featureReportService.QueryAllCustomerFeaturesAsync(progress);
+            var profiles = _connectionSource.LoadAllConnections();
+            var data = await _featureReportService.QueryAllCustomerFeaturesAsync(profiles, progress);
 
             if (data.Customers.Count == 0)
             {

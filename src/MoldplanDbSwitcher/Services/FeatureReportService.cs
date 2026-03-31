@@ -5,7 +5,6 @@ namespace MoldplanDbSwitcher.Services;
 
 public class FeatureReportService : IFeatureReportService
 {
-    private readonly IConnectionSourceService _connectionSource;
     private readonly IFeatureQueryService _featureQuery;
 
     // 顏色常數
@@ -17,15 +16,15 @@ public class FeatureReportService : IFeatureReportService
     private static readonly XLColor GreenFont = XLColor.FromHtml("#006100");
     private static readonly XLColor RedFont = XLColor.FromHtml("#9C0006");
 
-    public FeatureReportService(IConnectionSourceService connectionSource, IFeatureQueryService featureQuery)
+    public FeatureReportService(IFeatureQueryService featureQuery)
     {
-        _connectionSource = connectionSource;
         _featureQuery = featureQuery;
     }
 
-    public async Task<FeatureReportData> QueryAllCustomerFeaturesAsync(IProgress<string>? progress = null)
+    public async Task<FeatureReportData> QueryAllCustomerFeaturesAsync(
+        IReadOnlyList<ConnectionProfile> profiles,
+        IProgress<string>? progress = null)
     {
-        var profiles = _connectionSource.LoadAllConnections();
         var result = new FeatureReportData();
 
         for (int i = 0; i < profiles.Count; i++)

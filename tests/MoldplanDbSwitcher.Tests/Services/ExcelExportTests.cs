@@ -16,9 +16,8 @@ public class ExcelExportTests : IDisposable
         _tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(_tempDir);
 
-        var connectionSource = Substitute.For<IConnectionSourceService>();
         var featureQuery = Substitute.For<IFeatureQueryService>();
-        _sut = new FeatureReportService(connectionSource, featureQuery);
+        _sut = new FeatureReportService(featureQuery);
     }
 
     public void Dispose()

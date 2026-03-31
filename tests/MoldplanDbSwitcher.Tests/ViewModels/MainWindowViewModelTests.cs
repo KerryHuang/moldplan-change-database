@@ -121,7 +121,7 @@ public class MainWindowViewModelTests
     [Fact]
     public async Task ExportFeatureReport_SetsIsExporting()
     {
-        _featureReportService.QueryAllCustomerFeaturesAsync(Arg.Any<IProgress<string>>())
+        _featureReportService.QueryAllCustomerFeaturesAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(), Arg.Any<IProgress<string>>())
             .Returns(new FeatureReportData());
 
         var vm = CreateVm();
@@ -136,7 +136,7 @@ public class MainWindowViewModelTests
     [Fact]
     public async Task ExportFeatureReport_NoSavePath_DoesNotExport()
     {
-        _featureReportService.QueryAllCustomerFeaturesAsync(Arg.Any<IProgress<string>>())
+        _featureReportService.QueryAllCustomerFeaturesAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(), Arg.Any<IProgress<string>>())
             .Returns(new FeatureReportData());
 
         var vm = CreateVm();
@@ -173,7 +173,7 @@ public class MainWindowViewModelTests
     {
         var reportData = new FeatureReportData();
         reportData.FailedConnections.Add("Bad-Staging");
-        _featureReportService.QueryAllCustomerFeaturesAsync(Arg.Any<IProgress<string>>())
+        _featureReportService.QueryAllCustomerFeaturesAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(), Arg.Any<IProgress<string>>())
             .Returns(reportData);
 
         var vm = CreateVm();
