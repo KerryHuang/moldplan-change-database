@@ -65,8 +65,11 @@ public class AnsibleSyncService : IAnsibleSyncService
         if (root.TryGetValue("all", out var allObj) &&
             allObj is Dictionary<object, object> all &&
             all.TryGetValue("children", out var childrenObj) &&
-            childrenObj is Dictionary<object, object> children)
+            childrenObj is Dictionary<object, object> topChildren)
         {
+            // hosts.yml 結構：all.children.customers.children.customer_<name>
+            // 也支援直接在 all.children 下的格式
+            var children = FindCustomerChildren(topChildren);
             foreach (var (groupKey, groupVal) in children)
             {
                 var groupName = groupKey.ToString()!;
@@ -116,6 +119,31 @@ public class AnsibleSyncService : IAnsibleSyncService
         }
 
         return customers;
+    }
+
+    /// <summary>
+    /// 在 children 樹中找到包含 customer_* 群組的層級。
+    /// 支援 all.children.customer_* 或 all.children.customers.children.customer_* 兩種結構。
+    /// </summary>
+    private static Dictionary<object, object> FindCustomerChildren(Dictionary<object, object> topChildren)
+    {
+        // 直接層：all.children 下就有 customer_* 群組
+        if (topChildren.Keys.Any(k => k.ToString()!.StartsWith("customer_")))
+            return topChildren;
+
+        // 巢狀層：all.children.<group>.children 下有 customer_* 群組
+        foreach (var (_, val) in topChildren)
+        {
+            if (val is Dictionary<object, object> groupDict &&
+                groupDict.TryGetValue("children", out var subChildrenObj) &&
+                subChildrenObj is Dictionary<object, object> subChildren &&
+                subChildren.Keys.Any(k => k.ToString()!.StartsWith("customer_")))
+            {
+                return subChildren;
+            }
+        }
+
+        return topChildren;
     }
 
     private async Task<ConnectionProfile?> BuildProfileAsync(
