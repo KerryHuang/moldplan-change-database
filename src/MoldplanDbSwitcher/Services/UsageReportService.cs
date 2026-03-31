@@ -52,7 +52,7 @@ public class UsageReportService : IUsageReportService
     public Task ExportToExcelAsync(string path, UsageReportData data)
     {
         using var wb = new XLWorkbook();
-        var ws = wb.Worksheets.Add("使用工時統計");
+        var ws = wb.Worksheets.Add("使用次數統計");
 
         // 取得所有客戶名稱（保持插入順序，去重）
         var customers = data.Rows.Select(r => r.CustomerName).Distinct().ToList();

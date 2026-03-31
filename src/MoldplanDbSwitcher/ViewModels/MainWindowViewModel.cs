@@ -293,7 +293,7 @@ public partial class MainWindowViewModel : ObservableObject
     private async Task ExportUsageReport()
     {
         IsExporting = true;
-        ProgressText = "正在查詢使用工時...";
+        ProgressText = "正在查詢使用次數...";
 
         try
         {

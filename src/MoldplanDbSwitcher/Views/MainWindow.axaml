@@ -21,7 +21,7 @@
       <MenuItem Header="報表(_R)">
         <MenuItem Header="匯出功能差異表(_F)" Click="OnExportFeatureReportClick"
                   IsEnabled="{Binding !IsExporting}" />
-        <MenuItem Header="匯出使用工時統計(_U)" Click="OnExportUsageReportClick"
+        <MenuItem Header="匯出使用次數統計(_U)" Click="OnExportUsageReportClick"
                   IsEnabled="{Binding !IsExporting}" />
       </MenuItem>
     </Menu>
