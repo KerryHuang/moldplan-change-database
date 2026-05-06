@@ -33,6 +33,14 @@
           <TextBox x:Name="VaultPasswordFileBox" Watermark="預設：~/.ansible-vault-pass" />
         </DockPanel>
       </StackPanel>
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="開發目錄：" />
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="瀏覽..." Click="OnBrowseDevDirectoryClick" Margin="8,0,0,0" />
+          <TextBox x:Name="DevDirectoryBox" Watermark="例：C:\Users\alice\repos" />
+        </DockPanel>
+      </StackPanel>
     </StackPanel>
 
   </DockPanel>

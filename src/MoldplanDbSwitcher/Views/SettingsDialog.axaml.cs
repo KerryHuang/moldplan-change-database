@@ -18,6 +18,7 @@ public partial class SettingsDialog : Window
         var settings = _appSettingsService.Load();
         AnsibleRepoPathBox.Text = settings.AnsibleRepoPath;
         VaultPasswordFileBox.Text = settings.VaultPasswordFile;
+        DevDirectoryBox.Text = settings.DevDirectory;
     }
 
     private void OnSaveClick(object? sender, RoutedEventArgs e)
@@ -25,7 +26,8 @@ public partial class SettingsDialog : Window
         _appSettingsService.Save(new AppSettings
         {
             AnsibleRepoPath = AnsibleRepoPathBox.Text ?? string.Empty,
-            VaultPasswordFile = VaultPasswordFileBox.Text ?? string.Empty
+            VaultPasswordFile = VaultPasswordFileBox.Text ?? string.Empty,
+            DevDirectory = DevDirectoryBox.Text ?? string.Empty
         });
         Close();
     }
@@ -52,5 +54,16 @@ public partial class SettingsDialog : Window
         });
         if (files.Count > 0)
             VaultPasswordFileBox.Text = files[0].Path.LocalPath;
+    }
+
+    private async void OnBrowseDevDirectoryClick(object? sender, RoutedEventArgs e)
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "選擇開發目錄",
+            AllowMultiple = false
+        });
+        if (folders.Count > 0)
+            DevDirectoryBox.Text = folders[0].Path.LocalPath;
     }
 }
