@@ -61,6 +61,10 @@
       <StackPanel Orientation="Horizontal" Spacing="8">
         <Button Content="套用變更" Command="{Binding ApplyChangesCommand}"
                 Classes="accent" HorizontalAlignment="Left" />
+        <Button Content="套用開發"
+                Command="{Binding ApplyDevCommand}"
+                IsVisible="{Binding HasDevDirectory}"
+                HorizontalAlignment="Left" />
         <Button Content="新增自訂連線" Click="OnAddConnectionClick"
                 HorizontalAlignment="Left" />
         <Button Content="刪除自訂連線" Click="OnDeleteConnectionClick"

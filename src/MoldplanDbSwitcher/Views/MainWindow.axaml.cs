@@ -91,9 +91,27 @@ public partial class MainWindow : Window
     {
         var dialog = new SettingsDialog(App.Services!.GetRequiredService<IAppSettingsService>());
         await dialog.ShowDialog(this);
-        // 設定儲存後刷新同步按鈕狀態
         if (DataContext is MainWindowViewModel vm)
+        {
             vm.NotifyCanSyncAnsibleChanged();
+            vm.NotifyHasDevDirectoryChanged();
+        }
+    }
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+        if (DataContext is MainWindowViewModel vm)
+            SetupApplyDevCallback(vm);
+    }
+
+    private void SetupApplyDevCallback(MainWindowViewModel vm)
+    {
+        vm.ApplyDevDialogCallback = async files =>
+        {
+            var dialog = new ApplyDevDialog(files);
+            return await dialog.ShowDialog<IReadOnlyList<string>?>(this);
+        };
     }
 
     private async void OnExportConnectionsClick(object? sender, RoutedEventArgs e)
