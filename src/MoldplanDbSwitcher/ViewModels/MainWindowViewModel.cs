@@ -17,6 +17,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IUsageReportService _usageReportService;
     private readonly IAnsibleSyncService _ansibleSyncService;
     private readonly IAppSettingsService _appSettingsService;
+    private readonly IAppSettingsDevService _appSettingsDevService;
     private List<ConnectionProfile> _ansibleConnections = [];
 
     [ObservableProperty]
@@ -56,6 +57,38 @@ public partial class MainWindowViewModel : ObservableObject
     partial void OnIsSyncingAnsibleChanged(bool value) => OnPropertyChanged(nameof(CanSyncAnsible));
 
     public void NotifyCanSyncAnsibleChanged() => OnPropertyChanged(nameof(CanSyncAnsible));
+
+    public bool HasDevDirectory =>
+        !string.IsNullOrWhiteSpace(_appSettingsService.Load().DevDirectory);
+
+    public void NotifyHasDevDirectoryChanged() => OnPropertyChanged(nameof(HasDevDirectory));
+
+    public Func<IReadOnlyList<string>, Task<IReadOnlyList<string>?>>? ApplyDevDialogCallback { get; set; }
+
+    [RelayCommand]
+    private async Task ApplyDevAsync()
+    {
+        var devDir = _appSettingsService.Load().DevDirectory;
+        var files = _appSettingsDevService.FindFiles(devDir);
+
+        if (ApplyDevDialogCallback is null) return;
+        var selected = await ApplyDevDialogCallback(files);
+        if (selected is null || SelectedConnection is null) return;
+
+        var success = 0;
+        var fail = 0;
+        foreach (var path in selected)
+        {
+            if (_appSettingsDevService.Apply(path, SelectedConnection))
+                success++;
+            else
+                fail++;
+        }
+
+        StatusMessage = fail == 0
+            ? $"套用完成：已更新 {success} 個檔案"
+            : $"套用完成：{success} 成功，{fail} 失敗";
+    }
 
     [ObservableProperty]
     private bool _isExporting;
@@ -100,7 +133,8 @@ public partial class MainWindowViewModel : ObservableObject
         IConnectionExportService connectionExportService,
         IUsageReportService usageReportService,
         IAnsibleSyncService ansibleSyncService,
-        IAppSettingsService appSettingsService)
+        IAppSettingsService appSettingsService,
+        IAppSettingsDevService appSettingsDevService)
     {
         _connectionSource = connectionSource;
         _serverTxtService = serverTxtService;
@@ -110,6 +144,7 @@ public partial class MainWindowViewModel : ObservableObject
         _usageReportService = usageReportService;
         _ansibleSyncService = ansibleSyncService;
         _appSettingsService = appSettingsService;
+        _appSettingsDevService = appSettingsDevService;
 
         LoadConnections();
         DiscoverServerTxtFiles();
