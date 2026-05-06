@@ -8,4 +8,6 @@ public class AppSettings
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             ".ansible-vault-pass");
+
+    public string DevDirectory { get; set; } = string.Empty;
 }
