@@ -31,6 +31,7 @@ class Program
         services.AddSingleton<IUsageReportService, UsageReportService>();
         services.AddSingleton<IConnectionExportService, ConnectionExportService>();
         services.AddSingleton<IAnsibleSyncService, AnsibleSyncService>();
+        services.AddSingleton<IAppSettingsDevService, AppSettingsDevService>();
         services.AddTransient<MainWindowViewModel>();
     }
 
