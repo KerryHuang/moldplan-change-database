@@ -10,6 +10,18 @@ public class AppSettingsDevServiceTests : IDisposable
     private readonly string _tempDir;
     private readonly AppSettingsDevService _sut;
 
+    private const string ValidMssqlJson = """
+        {
+          "MSSQL": {
+            "Host": "172.16.1.25",
+            "Port": "1433",
+            "UserId": "mis",
+            "Password": "service",
+            "ApplicationDatabase": "yuchiun-test"
+          }
+        }
+        """;
+
     public AppSettingsDevServiceTests()
     {
         _tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -40,14 +52,24 @@ public class AppSettingsDevServiceTests : IDisposable
         Directory.CreateDirectory(sub);
         var file1 = Path.Combine(_tempDir, "appsettings.Development.json");
         var file2 = Path.Combine(sub, "appsettings.Development.json");
-        File.WriteAllText(file1, "{}");
-        File.WriteAllText(file2, "{}");
+        File.WriteAllText(file1, ValidMssqlJson);
+        File.WriteAllText(file2, ValidMssqlJson);
 
         var result = _sut.FindFiles(_tempDir);
 
         Assert.Equal(2, result.Count);
         Assert.Contains(file1, result);
         Assert.Contains(file2, result);
+    }
+
+    [Fact]
+    public void FindFiles_IgnoresMissingMssqlSection()
+    {
+        File.WriteAllText(Path.Combine(_tempDir, "appsettings.Development.json"), "{}");
+
+        var result = _sut.FindFiles(_tempDir);
+
+        Assert.Empty(result);
     }
 
     [Fact]

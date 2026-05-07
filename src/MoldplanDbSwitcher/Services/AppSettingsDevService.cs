@@ -11,7 +11,28 @@ public class AppSettingsDevService : IAppSettingsDevService
             return [];
 
         return Directory.EnumerateFiles(directory, "appsettings.Development.json",
-            SearchOption.AllDirectories).ToList();
+            SearchOption.AllDirectories)
+            .Where(HasMssqlSection)
+            .ToList();
+    }
+
+    private static bool HasMssqlSection(string filePath)
+    {
+        try
+        {
+            var root = JsonNode.Parse(File.ReadAllText(filePath));
+            if (root is not JsonObject rootObj) return false;
+            if (rootObj["MSSQL"] is not JsonObject mssql) return false;
+            return mssql["Host"] is not null
+                && mssql["Port"] is not null
+                && mssql["UserId"] is not null
+                && mssql["Password"] is not null
+                && mssql["ApplicationDatabase"] is not null;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public bool Apply(string filePath, ConnectionProfile profile)
