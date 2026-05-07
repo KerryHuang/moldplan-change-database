@@ -63,6 +63,21 @@ public class AppSettingsDevServiceTests : IDisposable
     }
 
     [Fact]
+    public void FindFiles_IgnoresBinAndObjDirectories()
+    {
+        var binDir = Path.Combine(_tempDir, "projectA", "bin", "Debug", "net9.0");
+        var objDir = Path.Combine(_tempDir, "projectA", "obj");
+        Directory.CreateDirectory(binDir);
+        Directory.CreateDirectory(objDir);
+        File.WriteAllText(Path.Combine(binDir, "appsettings.Development.json"), ValidMssqlJson);
+        File.WriteAllText(Path.Combine(objDir, "appsettings.Development.json"), ValidMssqlJson);
+
+        var result = _sut.FindFiles(_tempDir);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
     public void FindFiles_IgnoresMissingMssqlSection()
     {
         File.WriteAllText(Path.Combine(_tempDir, "appsettings.Development.json"), "{}");

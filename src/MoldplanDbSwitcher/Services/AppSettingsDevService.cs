@@ -12,8 +12,17 @@ public class AppSettingsDevService : IAppSettingsDevService
 
         return Directory.EnumerateFiles(directory, "appsettings.Development.json",
             SearchOption.AllDirectories)
+            .Where(f => !IsUnderBinOrObj(f, directory))
             .Where(HasMssqlSection)
             .ToList();
+    }
+
+    private static bool IsUnderBinOrObj(string filePath, string baseDirectory)
+    {
+        var relative = Path.GetRelativePath(baseDirectory, filePath);
+        var parts = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return parts.Any(p => p.Equals("bin", StringComparison.OrdinalIgnoreCase)
+                           || p.Equals("obj", StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool HasMssqlSection(string filePath)
