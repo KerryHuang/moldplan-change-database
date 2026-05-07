@@ -63,17 +63,19 @@ public partial class MainWindowViewModel : ObservableObject
 
     public void NotifyHasDevDirectoryChanged() => OnPropertyChanged(nameof(HasDevDirectory));
 
-    public Func<IReadOnlyList<string>, Task<IReadOnlyList<string>?>>? ApplyDevDialogCallback { get; set; }
+    public Func<IReadOnlyList<string>, ConnectionProfile, Task<IReadOnlyList<string>?>>? ApplyDevDialogCallback { get; set; }
 
     [RelayCommand]
     private async Task ApplyDevAsync()
     {
+        if (SelectedConnection is null) return;
+
         var devDir = _appSettingsService.Load().DevDirectory;
         var files = _appSettingsDevService.FindFiles(devDir);
 
         if (ApplyDevDialogCallback is null) return;
-        var selected = await ApplyDevDialogCallback(files);
-        if (selected is null || SelectedConnection is null) return;
+        var selected = await ApplyDevDialogCallback(files, SelectedConnection);
+        if (selected is null) return;
 
         var success = 0;
         var fail = 0;

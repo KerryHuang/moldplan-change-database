@@ -107,9 +107,9 @@ public partial class MainWindow : Window
 
     private void SetupApplyDevCallback(MainWindowViewModel vm)
     {
-        vm.ApplyDevDialogCallback = async files =>
+        vm.ApplyDevDialogCallback = async (files, profile) =>
         {
-            var dialog = new ApplyDevDialog(files);
+            var dialog = new ApplyDevDialog(files, profile);
             return await dialog.ShowDialog<IReadOnlyList<string>?>(this);
         };
     }
