@@ -1,6 +1,6 @@
 # 資料庫連線切換工具 (MoldplanDbSwitcher)
 
-跨平台桌面應用程式，用於切換 WDMIS 系統的資料庫連線設定。選擇資料庫連線後，自動替換 `SERVER.txt` 中的伺服器位址與資料庫名稱。
+跨平台桌面應用程式，用於切換 WDMIS 系統的資料庫連線設定。選擇資料庫連線後，自動替換 `SERVER.txt` 中的伺服器位址與資料庫名稱，以及 .NET 專案的 `appsettings.Development.json` 中的 MSSQL 連線設定。
 
 ## 功能
 
@@ -9,6 +9,7 @@
 - 自動搜尋 WDMIS 目錄下的 `SERVER.txt`
 - 顯示變更前後對比，確認後套用
 - 支援同時修改多個 `SERVER.txt`
+- **套用開發設定**：掃描指定目錄下所有含 MSSQL 區塊的 `appsettings.Development.json`，勾選後批次更新
 
 ## SERVER.txt 格式
 
@@ -29,6 +30,24 @@ app,my-database,192.168.1.100,XXX,1
 |------|------|
 | Windows | `C:\WDMIS\SERVER.txt`、`D:\WDMIS\SERVER.txt` |
 | macOS / Linux | `~/WDMIS/SERVER.txt` |
+
+## 套用開發設定（appsettings.Development.json）
+
+在「設定」視窗指定「開發目錄」後，主視窗會出現「套用開發」按鈕。點擊後：
+
+1. 遞迴掃描目錄下所有含完整 MSSQL 區塊的 `appsettings.Development.json`（排除 `bin`、`obj` 目錄）
+2. 對話框顯示套用預覽（Host、Port、UserId、Password、ApplicationDatabase）
+3. 勾選要更新的檔案，確認後批次套用
+
+僅更新 MSSQL 區塊的以下五個欄位，其他欄位（如 `LocalizationDatabase`、`QuartzJobDatabase`）保留不動：
+
+| 欄位 | 來源 |
+|------|------|
+| `Host` | 連線的 Server（逗號前） |
+| `Port` | 連線的 Server（逗號後，預設 `1433`） |
+| `UserId` | 連線的 Username |
+| `Password` | 連線的 Password |
+| `ApplicationDatabase` | 連線的 Database |
 
 ## 連線設定來源
 
