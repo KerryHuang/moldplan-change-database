@@ -1,5 +1,5 @@
 ---
-globs: ["src/MoldplanDbSwitcher/Services/ServerTxtService.cs"]
+globs: ["src/MoldplanDbSwitcher/**"]
 ---
 
 # 跨平台路徑慣例

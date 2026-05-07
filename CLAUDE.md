@@ -18,28 +18,7 @@ MoldplanDbSwitcher — 跨平台 Avalonia 桌面應用程式，用於切換 WDMI
 
 ## Build & Test Commands
 
-```bash
-# 建置
-dotnet build src/MoldplanDbSwitcher/MoldplanDbSwitcher.csproj
-
-# 執行
-dotnet run --project src/MoldplanDbSwitcher/MoldplanDbSwitcher.csproj
-
-# 全部測試
-dotnet test tests/MoldplanDbSwitcher.Tests/
-
-# 單一測試類別
-dotnet test tests/MoldplanDbSwitcher.Tests/ --filter "ServerTxtServiceTests"
-
-# 單一測試方法
-dotnet test tests/MoldplanDbSwitcher.Tests/ --filter "ServerTxtServiceTests.Apply_WritesModifiedContent"
-
-# 發佈 Windows
-dotnet publish src/MoldplanDbSwitcher/MoldplanDbSwitcher.csproj -c Release -r win-x64 --self-contained -o publish/win-x64/
-
-# 發佈 macOS (Apple Silicon)
-dotnet publish src/MoldplanDbSwitcher/MoldplanDbSwitcher.csproj -c Release -r osx-arm64 --self-contained -o publish/osx-arm64/
-```
+See `/dotnet-run` skill for all build, test, and publish commands.
 
 ## Architecture
 
@@ -66,5 +45,3 @@ src/MoldplanDbSwitcher/
 ## Key Conventions
 
 - DI：透過 `Microsoft.Extensions.DependencyInjection`，在 `Program.cs` 註冊
-- Avalonia 資源（如 icon）必須在 .csproj 加 `<AvaloniaResource>` 才會嵌入發佈包
-- 測試框架：xUnit + NSubstitute

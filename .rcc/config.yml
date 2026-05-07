@@ -1,0 +1,26 @@
+migration:
+  completed: false
+  last_at: "2026-05-07"
+  last_rcc_version: "11.2.0"
+
+release_automation:
+  decision: skip
+  tool: null
+
+settings_scope:
+  safety_bypass: .claude/settings.json
+
+orchestrator:
+  model: claude-opus-4-7
+  budget_tokens: xhigh
+
+decisions_log:
+  - date: "2026-05-07"
+    decision: release_automation=skip
+    reason: 目前使用手動 git tag 管理版本
+  - date: "2026-05-07"
+    decision: safety_bypass=.claude/settings.json
+    reason: 團隊共享設定，checked in
+  - date: "2026-05-07"
+    decision: orchestrator=claude-opus-4-7@xhigh
+    reason: 預設值，依 rcc 11.2.0 最佳實踐
