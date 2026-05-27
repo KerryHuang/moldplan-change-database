@@ -134,6 +134,20 @@ public partial class MainWindow : Window
         await dialog.ShowDialog(this);
     }
 
+    private void OnDownloadUpdateClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm && !string.IsNullOrEmpty(vm.UpdateReleaseUrl))
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(
+                    new System.Diagnostics.ProcessStartInfo(vm.UpdateReleaseUrl)
+                    { UseShellExecute = true });
+            }
+            catch { /* 靜音 */ }
+        }
+    }
+
     private async void OnImportConnectionsClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not MainWindowViewModel vm) return;
