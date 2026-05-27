@@ -12,4 +12,6 @@ public class AppSettings
     public string DevDirectory { get; set; } = string.Empty;
 
     public string? MoldPlanScriptsPath { get; set; }
+
+    public string? GitHubToken { get; set; }
 }
