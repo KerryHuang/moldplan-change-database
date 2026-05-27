@@ -39,7 +39,7 @@ jobs:
         run: dotnet test tests/MoldplanDbSwitcher.Tests/MoldplanDbSwitcher.Tests.csproj --configuration Release --no-restore --verbosity normal
 
       - name: 發布應用程式
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained -o publish/win-x64
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained -o publish/win-x64 -p:Version=${{ steps.get-version.outputs.version }}
 
       - name: 建立壓縮包
         shell: pwsh
@@ -81,7 +81,7 @@ jobs:
         run: dotnet restore ${{ env.PROJECT_PATH }}
 
       - name: 發布應用程式
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -r ${{ matrix.runtime }} --self-contained -o publish/${{ matrix.runtime }}
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -r ${{ matrix.runtime }} --self-contained -o publish/${{ matrix.runtime }} -p:Version=${{ steps.get-version.outputs.version }}
 
       - name: 建立壓縮包
         run: |

@@ -6,4 +6,5 @@ public interface IAppSettingsService
 {
     AppSettings Load();
     void Save(AppSettings settings);
+    string GetMoldPlanScriptsPath();
 }

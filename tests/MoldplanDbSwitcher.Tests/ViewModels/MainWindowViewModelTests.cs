@@ -4,6 +4,7 @@ using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.Services;
 using MoldplanDbSwitcher.Services.AnsibleSync;
 using MoldplanDbSwitcher.ViewModels;
+using Microsoft.Data.SqlClient;
 
 namespace MoldplanDbSwitcher.Tests.ViewModels;
 
@@ -18,6 +19,10 @@ public class MainWindowViewModelTests
     private readonly IAnsibleSyncService _ansibleSyncService;
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAppSettingsDevService _appSettingsDevService;
+    private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly ReportingQueryViewModel _reportingQuery;
+    private readonly ReportingDeployViewModel _reportingDeploy;
+    private readonly IUpdateCheckService _updateCheckService;
 
     public MainWindowViewModelTests()
     {
@@ -31,6 +36,21 @@ public class MainWindowViewModelTests
         _appSettingsService = Substitute.For<IAppSettingsService>();
         _appSettingsService.Load().Returns(new AppSettings());
         _appSettingsDevService = Substitute.For<IAppSettingsDevService>();
+        _connectionFactory = Substitute.For<ISqlConnectionFactory>();
+        _connectionFactory.Create(Arg.Any<ConnectionProfile>()).Returns(
+            new SqlConnection("Server=localhost;Database=test;User Id=sa;Password=pass;"));
+        _reportingQuery = new ReportingQueryViewModel(
+            _ => Substitute.For<IReportingObjectService>(),
+            _ => Substitute.For<IReportingQueryService>(),
+            "");
+        _reportingDeploy = new ReportingDeployViewModel(
+            _ => Substitute.For<IReportingObjectService>(),
+            _ => Substitute.For<IReportingDeployService>(),
+            "", "");
+
+        _updateCheckService = Substitute.For<IUpdateCheckService>();
+        _updateCheckService.CheckAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns((UpdateInfo?)null);
 
         _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
         {
@@ -43,7 +63,8 @@ public class MainWindowViewModelTests
     private MainWindowViewModel CreateVm() => new(
         _connectionSource, _serverTxtService, _settingsService,
         _featureReportService, _connectionExportService, _usageReportService,
-        _ansibleSyncService, _appSettingsService, _appSettingsDevService);
+        _ansibleSyncService, _appSettingsService, _appSettingsDevService,
+        _connectionFactory, _reportingQuery, _reportingDeploy, _updateCheckService);
 
     [Fact]
     public void Constructor_LoadsConnections()
@@ -235,5 +256,50 @@ public class MainWindowViewModelTests
 
         await _usageReportService.DidNotReceive().QueryAllAsync(
             Arg.Any<IReadOnlyList<ConnectionProfile>>(), Arg.Any<IProgress<string>>());
+    }
+
+    private static async Task WaitForUpdateCheckAsync(MainWindowViewModel vm)
+    {
+        for (var i = 0; i < 50; i++)
+        {
+            if (vm.UpdateAvailable || vm.UpdateBannerText.Length > 0) return;
+            await Task.Delay(20);
+        }
+    }
+
+    [Fact]
+    public async Task Ctor_UpdateAvailable_SetsBannerProperties()
+    {
+        _updateCheckService.CheckAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new UpdateInfo("9.9.9", "https://x/release", "notes"));
+
+        var vm = CreateVm();
+        await WaitForUpdateCheckAsync(vm);
+
+        Assert.True(vm.UpdateAvailable);
+        Assert.Equal("https://x/release", vm.UpdateReleaseUrl);
+        Assert.Contains("9.9.9", vm.UpdateBannerText);
+    }
+
+    [Fact]
+    public async Task Ctor_NoUpdate_BannerHidden()
+    {
+        // Default fixture returns null
+        var vm = CreateVm();
+        await Task.Delay(100); // let fire-and-forget settle
+        Assert.False(vm.UpdateAvailable);
+    }
+
+    [Fact]
+    public async Task DismissUpdateCommand_HidesBanner()
+    {
+        _updateCheckService.CheckAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new UpdateInfo("9.9.9", "https://x", ""));
+        var vm = CreateVm();
+        await WaitForUpdateCheckAsync(vm);
+
+        vm.DismissUpdateCommand.Execute(null);
+
+        Assert.False(vm.UpdateAvailable);
     }
 }

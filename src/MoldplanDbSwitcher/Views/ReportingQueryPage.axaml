@@ -1,0 +1,138 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MoldplanDbSwitcher.ViewModels"
+             xmlns:models="using:MoldplanDbSwitcher.Models"
+             x:Class="MoldplanDbSwitcher.Views.ReportingQueryPage"
+             x:DataType="vm:ReportingQueryViewModel">
+  <Grid ColumnDefinitions="360,*" Margin="8">
+    <DockPanel Grid.Column="0">
+      <Button DockPanel.Dock="Top" Content="重新整理"
+              Command="{Binding LoadObjectsCommand}" Margin="0,0,0,8" />
+      <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding ObjectGroups}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:ReportingObjectGroup">
+              <StackPanel Margin="0,0,0,8">
+                <TextBlock Text="{Binding Header}" FontWeight="Bold" FontSize="11"
+                           Foreground="#888" Margin="4,4,0,2" />
+                <ListBox ItemsSource="{Binding Items}"
+                         SelectionChanged="OnGroupListBoxSelectionChanged">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate DataType="models:ReportingObject">
+                      <StackPanel>
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Text="{Binding Description}" FontSize="10" Foreground="Gray"
+                                   IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </DockPanel>
+
+    <DockPanel Grid.Column="1" Margin="8,0,0,0">
+      <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+          <TextBlock Text="Top:" VerticalAlignment="Center" />
+          <NumericUpDown Value="{Binding TopN}" Minimum="1" Maximum="10000" Width="140" />
+          <Button Content="+ 條件" Command="{Binding AddFilterCommand}"
+                  IsEnabled="{Binding SelectedColumns.Count}" />
+          <Button Content="查詢" Command="{Binding QueryCommand}" />
+          <TextBlock Text="載入中⋯" Foreground="DodgerBlue"
+                     VerticalAlignment="Center" IsVisible="{Binding IsBusy}" />
+        </StackPanel>
+        <ItemsControl ItemsSource="{Binding Filters}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="models:QueryFilterRow">
+              <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                <ComboBox SelectedItem="{Binding Connector}" Width="70">
+                  <models:FilterConnector>And</models:FilterConnector>
+                  <models:FilterConnector>Or</models:FilterConnector>
+                </ComboBox>
+                <ComboBox SelectedItem="{Binding SelectedColumn}" Width="260"
+                          ItemsSource="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).SelectedColumns}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="models:ReportingColumn">
+                      <StackPanel>
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Text="{Binding Description}" FontSize="10" Foreground="Gray"
+                                   IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+                <ComboBox SelectedItem="{Binding Operator}" Width="120">
+                  <models:FilterOperator>Equals</models:FilterOperator>
+                  <models:FilterOperator>NotEquals</models:FilterOperator>
+                  <models:FilterOperator>Contains</models:FilterOperator>
+                  <models:FilterOperator>StartsWith</models:FilterOperator>
+                  <models:FilterOperator>GreaterThan</models:FilterOperator>
+                  <models:FilterOperator>LessThan</models:FilterOperator>
+                  <models:FilterOperator>GreaterOrEqual</models:FilterOperator>
+                  <models:FilterOperator>LessOrEqual</models:FilterOperator>
+                  <models:FilterOperator>IsNull</models:FilterOperator>
+                  <models:FilterOperator>IsNotNull</models:FilterOperator>
+                </ComboBox>
+                <TextBox Text="{Binding Value}" Width="200" Watermark="值" />
+                <Button Content="✕"
+                        Command="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).RemoveFilterCommand}"
+                        CommandParameter="{Binding}" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,2">
+          <TextBlock Text="排序" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <Button Content="+ 排序" Command="{Binding AddSortCommand}"
+                  IsEnabled="{Binding SelectedColumns.Count}" />
+        </StackPanel>
+        <ItemsControl ItemsSource="{Binding Sorts}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="models:QuerySortRow">
+              <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                <ComboBox SelectedItem="{Binding SelectedColumn}" Width="260"
+                          ItemsSource="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).SelectedColumns}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="models:ReportingColumn">
+                      <StackPanel>
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Text="{Binding Description}" FontSize="10" Foreground="Gray"
+                                   IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+                <ComboBox SelectedItem="{Binding Direction}" Width="100">
+                  <models:SortDirection>Ascending</models:SortDirection>
+                  <models:SortDirection>Descending</models:SortDirection>
+                </ComboBox>
+                <Button Content="✕"
+                        Command="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).RemoveSortCommand}"
+                        CommandParameter="{Binding}" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+      <TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red" />
+      <TextBlock DockPanel.Dock="Top" Text="{Binding ResultStatus}"
+                 Foreground="#888" FontSize="11" Margin="0,4,0,4" />
+      <TabControl>
+        <TabItem Header="預覽">
+          <DataGrid Name="ResultGrid" ItemsSource="{Binding ResultRows}"
+                    IsReadOnly="True" AutoGenerateColumns="False" />
+        </TabItem>
+        <TabItem Header="欄位">
+          <DataGrid ItemsSource="{Binding SelectedColumns}" IsReadOnly="True" AutoGenerateColumns="True" />
+        </TabItem>
+        <TabItem Header="RefreshLog">
+          <DataGrid ItemsSource="{Binding RefreshLog}" IsReadOnly="True" AutoGenerateColumns="True" />
+        </TabItem>
+      </TabControl>
+    </DockPanel>
+  </Grid>
+</UserControl>

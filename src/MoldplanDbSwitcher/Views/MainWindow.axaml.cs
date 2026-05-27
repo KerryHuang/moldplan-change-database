@@ -16,6 +16,14 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
+    private void OnTopConnectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ComboBox cb) return;
+        if (cb.SelectedItem is not ConnectionProfile profile) return;
+        if (DataContext is not MainWindowViewModel vm) return;
+        vm.SelectedConnection = profile;
+    }
+
     private Func<Task<ReportSourceOptions?>> CreateReportSourceCallback(MainWindowViewModel vm) =>
         async () =>
         {
@@ -124,6 +132,20 @@ public partial class MainWindow : Window
         var exportVm = new ExportConnectionsViewModel(profiles, vm.ConnectionExportService);
         var dialog = new ExportConnectionsWindow { DataContext = exportVm };
         await dialog.ShowDialog(this);
+    }
+
+    private void OnDownloadUpdateClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm && !string.IsNullOrEmpty(vm.UpdateReleaseUrl))
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(
+                    new System.Diagnostics.ProcessStartInfo(vm.UpdateReleaseUrl)
+                    { UseShellExecute = true });
+            }
+            catch { /* 靜音 */ }
+        }
     }
 
     private async void OnImportConnectionsClick(object? sender, RoutedEventArgs e)

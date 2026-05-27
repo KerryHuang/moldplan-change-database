@@ -4,12 +4,38 @@
 
 ## 功能
 
+主視窗採三分頁設計，頂端有全域「目前連線」下拉選單，所有分頁共用同一個連線。
+
+### 連線切換
+
 - 讀取 [TableSpec (DatabaseDescriptionApp)](https://github.com/KerryHuang/DatabaseDescriptionApp) 的連線設定
 - 支援新增、編輯、刪除自訂連線
 - 自動搜尋 WDMIS 目錄下的 `SERVER.txt`
 - 顯示變更前後對比，確認後套用
 - 支援同時修改多個 `SERVER.txt`
 - **套用開發設定**：掃描指定目錄下所有含 MSSQL 區塊的 `appsettings.Development.json`，勾選後批次更新
+
+### Reporting 查詢
+
+針對 MoldPlan 的 `Reporting` schema 寬表 / View 提供 DBA 友善的查詢工具：
+
+- 左側分組列出 `Reporting` schema 下的 Base Tables / Summary Tables / Views / System Tables，附中文描述
+- 選取物件後自動載入 Top N 預覽（預設 100，硬上限 10000）、欄位 schema、最近 RefreshLog
+- DataGrid 欄位 header 顯示欄名 + 中文描述（hover 也有 tooltip）
+- **Filter Builder**：「+ 條件」可加多列篩選，每列可選欄位 / 運算子（=、≠、包含、開頭為、>, <, ≥, ≤, IS NULL, IS NOT NULL）/ 值，列間以 AND / OR 串接，連續 OR 自動加圓括號分組
+- **Sort Builder**：「+ 排序」可加多欄位排序（升冪 / 降冪）
+- 狀態列顯示實際執行的 SQL 與連到的 DB 名稱（診斷用）
+- 切換頂端連線時自動清空選取與結果，重新載入新連線的物件清單
+
+### Reporting 部署
+
+部署 / 重建 / 移除目標資料庫的 `Reporting` schema 一鍵化（取代手動執行 `docs/scripts/Reporting/*.sql`）：
+
+- 環境掃描：顯示 Schema 是否存在、Tables / Views / SP 數量
+- **部署全部 (01→04)**：依序執行 Schema → Tables → Views → SP；完整部署後按鈕自動停用並顯示「✓ 已完整部署」
+- **部署 Daily Job (05) / Hourly Job (06)**：自動替換 `<<CHANGE_ME>>` 為目標 DB 名稱
+- **⚠ 移除全部 (98)**：二次防呆，需手動輸入目標 DB 名稱才能執行
+- 腳本路徑可在「設定」指定，或透過 `MOLDPLAN_REPO` 環境變數提供（預設 `D:\Repos\MoldPlan-Workspace\docs\scripts\Reporting`）
 
 ## SERVER.txt 格式
 
@@ -55,6 +81,18 @@ app,my-database,192.168.1.100,XXX,1
 |------|------|------|
 | TableSpec | `%AppData%/TableSpec/connections.json` | 與 DatabaseDescriptionApp 共用（唯讀） |
 | 自訂 | `%AppData%/MoldplanDbSwitcher/connections.json` | 本應用程式管理 |
+| Ansible | `deploy-ansible` repo（需在「設定」指定路徑） | 從 Ansible vault 解密讀取，需 `~/.ansible-vault-pass` |
+
+## 應用程式設定
+
+`%AppData%/MoldplanDbSwitcher/app-settings.json`，可在「設定」對話框維護：
+
+| 設定 | 用途 |
+|------|------|
+| `AnsibleRepoPath` | deploy-ansible Repo 路徑（同步 Ansible 連線用） |
+| `VaultPasswordFile` | Ansible Vault 密碼檔（預設 `~/.ansible-vault-pass`） |
+| `DevDirectory` | 「套用開發設定」掃描根目錄 |
+| `MoldPlanScriptsPath` | Reporting 部署腳本路徑（留白則讀 `MOLDPLAN_REPO` 環境變數） |
 
 ## 下載與執行
 
@@ -108,7 +146,8 @@ dotnet publish src/MoldplanDbSwitcher/MoldplanDbSwitcher.csproj -c Release -r os
 - .NET 9
 - Avalonia 11.3 (跨平台 UI)
 - CommunityToolkit.Mvvm (MVVM)
-- xUnit + NSubstitute (測試)
+- Microsoft.Data.SqlClient (Reporting 查詢 / 部署)
+- xUnit + NSubstitute (測試；整合測試以 LocalDB 為測試 DB)
 
 ## 專案結構
 
