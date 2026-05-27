@@ -62,6 +62,7 @@ public partial class ReportingQueryViewModel : ObservableObject
 
     public async Task UseConnectionAsync(string connectionString)
     {
+        var dbHint = TryExtractDatabase(connectionString);
         _objects = _objectsFactory(connectionString);
         _query = _queryFactory(connectionString);
         SelectedObject = null;
@@ -73,12 +74,22 @@ public partial class ReportingQueryViewModel : ObservableObject
         AvailableColumnNames.Clear();
         Filters.Clear();
         RefreshLog.Clear();
-        ResultStatus = "切換連線中，正在載入物件清單⋯";
+        ResultStatus = $"切換連線中（目標 DB: {dbHint}），載入物件清單⋯";
         await LoadObjectsAsync();
         if (Objects.Count == 0 && ErrorMessage == null)
-            ResultStatus = "此連線尚未部署 Reporting schema（請至「Reporting 部署」頁建立）";
+            ResultStatus = $"此連線（{dbHint}）尚未部署 Reporting schema（請至「Reporting 部署」頁建立）";
         else if (ErrorMessage == null)
-            ResultStatus = "請從左側選擇物件以自動載入預覽";
+            ResultStatus = $"目前連線 DB: {dbHint}，請從左側選擇物件以自動載入預覽";
+    }
+
+    private static string TryExtractDatabase(string connectionString)
+    {
+        try
+        {
+            var b = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
+            return string.IsNullOrEmpty(b.InitialCatalog) ? "(未指定)" : b.InitialCatalog;
+        }
+        catch { return "(無效連線字串)"; }
     }
 
     [RelayCommand]
