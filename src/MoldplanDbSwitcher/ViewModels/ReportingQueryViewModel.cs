@@ -91,7 +91,6 @@ public partial class ReportingQueryViewModel : ObservableObject
             Objects.Clear();
             foreach (var o in await _objects.ListTablesAsync()) Objects.Add(o);
             foreach (var o in await _objects.ListViewsAsync()) Objects.Add(o);
-            foreach (var o in await _objects.ListProceduresAsync()) Objects.Add(o);
             RebuildGroups();
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
