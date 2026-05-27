@@ -39,7 +39,8 @@
         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
           <TextBlock Text="Top:" VerticalAlignment="Center" />
           <NumericUpDown Value="{Binding TopN}" Minimum="1" Maximum="10000" Width="140" />
-          <Button Content="+ 條件" Command="{Binding AddFilterCommand}" />
+          <Button Content="+ 條件" Command="{Binding AddFilterCommand}"
+                  IsEnabled="{Binding SelectedColumns.Count}" />
           <Button Content="查詢" Command="{Binding QueryCommand}" />
           <TextBlock Text="載入中⋯" Foreground="DodgerBlue"
                      VerticalAlignment="Center" IsVisible="{Binding IsBusy}" />
@@ -86,7 +87,8 @@
         </ItemsControl>
         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,2">
           <TextBlock Text="排序" FontWeight="SemiBold" VerticalAlignment="Center" />
-          <Button Content="+ 排序" Command="{Binding AddSortCommand}" />
+          <Button Content="+ 排序" Command="{Binding AddSortCommand}"
+                  IsEnabled="{Binding SelectedColumns.Count}" />
         </StackPanel>
         <ItemsControl ItemsSource="{Binding Sorts}">
           <ItemsControl.ItemTemplate>
