@@ -114,19 +114,19 @@ public class ReportingObjectService : IReportingObjectService
         if (!await TableExistsAsync(conn, "RefreshLog", ct)) return list;
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            SELECT TOP (@top) StartTime, EndTime, Status, RowCount, ErrorMessage
+            SELECT TOP (@top) StartedAt, DurationMs, RowsAffected, Status, ErrorMessage
             FROM Reporting.RefreshLog
-            WHERE TableName = @t
-            ORDER BY StartTime DESC;";
+            WHERE TargetTable = @t
+            ORDER BY StartedAt DESC;";
         cmd.Parameters.AddWithValue("@top", top);
         cmd.Parameters.AddWithValue("@t", tableName);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         while (await reader.ReadAsync(ct))
             list.Add(new RefreshLogEntry(
                 reader.GetDateTime(0),
-                reader.IsDBNull(1) ? null : reader.GetDateTime(1),
-                reader.GetString(2),
-                reader.IsDBNull(3) ? null : reader.GetInt32(3),
+                reader.GetInt32(1),
+                reader.GetInt32(2),
+                reader.GetString(3),
                 reader.IsDBNull(4) ? null : reader.GetString(4)));
         return list;
     }
