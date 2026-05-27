@@ -16,6 +16,14 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
+    private void OnTopConnectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ComboBox cb) return;
+        if (cb.SelectedItem is not ConnectionProfile profile) return;
+        if (DataContext is not MainWindowViewModel vm) return;
+        vm.SelectedConnection = profile;
+    }
+
     private Func<Task<ReportSourceOptions?>> CreateReportSourceCallback(MainWindowViewModel vm) =>
         async () =>
         {

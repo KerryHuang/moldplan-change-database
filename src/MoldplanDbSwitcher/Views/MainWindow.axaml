@@ -17,6 +17,7 @@
       <TextBlock Text="目前連線：" VerticalAlignment="Center" FontWeight="Bold" />
       <ComboBox ItemsSource="{Binding Connections}"
                 SelectedItem="{Binding SelectedConnection, Mode=TwoWay}"
+                SelectionChanged="OnTopConnectionChanged"
                 Width="400">
         <ComboBox.ItemTemplate>
           <DataTemplate DataType="models:ConnectionProfile">
