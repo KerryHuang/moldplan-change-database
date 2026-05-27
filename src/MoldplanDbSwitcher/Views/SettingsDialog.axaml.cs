@@ -20,6 +20,7 @@ public partial class SettingsDialog : Window
         VaultPasswordFileBox.Text = settings.VaultPasswordFile;
         DevDirectoryBox.Text = settings.DevDirectory;
         MoldPlanScriptsPathBox.Text = settings.MoldPlanScriptsPath ?? string.Empty;
+        GitHubTokenBox.Text = settings.GitHubToken ?? string.Empty;
     }
 
     private void OnSaveClick(object? sender, RoutedEventArgs e)
@@ -29,7 +30,8 @@ public partial class SettingsDialog : Window
             AnsibleRepoPath = AnsibleRepoPathBox.Text ?? string.Empty,
             VaultPasswordFile = VaultPasswordFileBox.Text ?? string.Empty,
             DevDirectory = DevDirectoryBox.Text ?? string.Empty,
-            MoldPlanScriptsPath = string.IsNullOrWhiteSpace(MoldPlanScriptsPathBox.Text) ? null : MoldPlanScriptsPathBox.Text
+            MoldPlanScriptsPath = string.IsNullOrWhiteSpace(MoldPlanScriptsPathBox.Text) ? null : MoldPlanScriptsPathBox.Text,
+            GitHubToken = string.IsNullOrWhiteSpace(GitHubTokenBox.Text) ? null : GitHubTokenBox.Text
         });
         Close();
     }

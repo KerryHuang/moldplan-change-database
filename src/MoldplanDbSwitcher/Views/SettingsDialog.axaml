@@ -51,6 +51,14 @@
         <TextBlock Text="留白時自動使用 MOLDPLAN_REPO\docs\scripts\Reporting"
                    FontSize="10" Foreground="Gray" />
       </StackPanel>
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="GitHub PAT（檢查更新用）：" />
+        <TextBox x:Name="GitHubTokenBox" PasswordChar="●"
+                 Watermark="留白則不檢查更新" />
+        <TextBlock FontSize="10" Foreground="Gray" TextWrapping="Wrap"
+                   Text="建議使用 fine-grained PAT，只授予該 Repo 的 Read access。" />
+      </StackPanel>
     </StackPanel>
 
   </DockPanel>
