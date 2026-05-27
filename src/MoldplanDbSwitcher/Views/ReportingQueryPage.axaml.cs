@@ -2,6 +2,7 @@ using System;
 using System.Collections.Specialized;
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.VisualTree;
 using MoldplanDbSwitcher.Models;
@@ -24,10 +25,17 @@ public partial class ReportingQueryPage : UserControl
         if (DataContext is not ReportingQueryViewModel vm) return;
         vm.ResultColumns.CollectionChanged -= OnColumnsChanged;
         vm.ResultColumns.CollectionChanged += OnColumnsChanged;
+        vm.SelectedColumns.CollectionChanged -= OnSelectedColumnsChanged;
+        vm.SelectedColumns.CollectionChanged += OnSelectedColumnsChanged;
         RebuildColumns(vm);
     }
 
     private void OnColumnsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (DataContext is ReportingQueryViewModel vm) RebuildColumns(vm);
+    }
+
+    private void OnSelectedColumnsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (DataContext is ReportingQueryViewModel vm) RebuildColumns(vm);
     }
@@ -39,11 +47,20 @@ public partial class ReportingQueryPage : UserControl
         grid.Columns.Clear();
         for (var i = 0; i < vm.ResultColumns.Count; i++)
         {
-            grid.Columns.Add(new DataGridTextColumn
+            var colName = vm.ResultColumns[i];
+            var colMeta = vm.SelectedColumns.FirstOrDefault(c =>
+                string.Equals(c.Name, colName, StringComparison.OrdinalIgnoreCase));
+
+            var headerBlock = new TextBlock { Text = colName };
+            if (!string.IsNullOrEmpty(colMeta?.Description))
+                ToolTip.SetTip(headerBlock, colMeta.Description);
+
+            var col = new DataGridTextColumn
             {
-                Header = vm.ResultColumns[i],
+                Header = headerBlock,
                 Binding = new Binding($"[{i}]")
-            });
+            };
+            grid.Columns.Add(col);
         }
     }
 

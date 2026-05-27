@@ -19,7 +19,11 @@
                          SelectionChanged="OnGroupListBoxSelectionChanged">
                   <ListBox.ItemTemplate>
                     <DataTemplate DataType="models:ReportingObject">
-                      <TextBlock Text="{Binding Name}" />
+                      <StackPanel>
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Text="{Binding Description}" FontSize="10" Foreground="Gray"
+                                   IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      </StackPanel>
                     </DataTemplate>
                   </ListBox.ItemTemplate>
                 </ListBox>
@@ -31,16 +35,44 @@
     </DockPanel>
 
     <DockPanel Grid.Column="1" Margin="8,0,0,0">
-      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
-        <TextBlock Text="Top:" VerticalAlignment="Center" />
-        <NumericUpDown Value="{Binding TopN}" Minimum="1" Maximum="10000" Width="140" />
-        <TextBlock Text="WHERE:" VerticalAlignment="Center" />
-        <TextBox Text="{Binding WhereClause}" Width="200" Watermark="可空白" />
-        <TextBlock Text="ORDER BY:" VerticalAlignment="Center" />
-        <TextBox Text="{Binding OrderByClause}" Width="150" Watermark="可空白" />
-        <Button Content="查詢" Command="{Binding QueryCommand}" />
-        <TextBlock Text="載入中⋯" Foreground="DodgerBlue"
-                   VerticalAlignment="Center" IsVisible="{Binding IsBusy}" />
+      <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+          <TextBlock Text="Top:" VerticalAlignment="Center" />
+          <NumericUpDown Value="{Binding TopN}" Minimum="1" Maximum="10000" Width="140" />
+          <TextBlock Text="排序:" VerticalAlignment="Center" Margin="16,0,0,0" />
+          <TextBox Text="{Binding OrderByClause}" Width="200"
+                   Watermark="例：MoldNo DESC（可空白）" />
+          <Button Content="+ 條件" Command="{Binding AddFilterCommand}" />
+          <Button Content="查詢" Command="{Binding QueryCommand}" />
+          <TextBlock Text="載入中⋯" Foreground="DodgerBlue"
+                     VerticalAlignment="Center" IsVisible="{Binding IsBusy}" />
+        </StackPanel>
+        <ItemsControl ItemsSource="{Binding Filters}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="models:QueryFilterRow">
+              <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                <ComboBox SelectedItem="{Binding ColumnName}" Width="200"
+                          ItemsSource="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).AvailableColumnNames}" />
+                <ComboBox SelectedItem="{Binding Operator}" Width="120">
+                  <models:FilterOperator>Equals</models:FilterOperator>
+                  <models:FilterOperator>NotEquals</models:FilterOperator>
+                  <models:FilterOperator>Contains</models:FilterOperator>
+                  <models:FilterOperator>StartsWith</models:FilterOperator>
+                  <models:FilterOperator>GreaterThan</models:FilterOperator>
+                  <models:FilterOperator>LessThan</models:FilterOperator>
+                  <models:FilterOperator>GreaterOrEqual</models:FilterOperator>
+                  <models:FilterOperator>LessOrEqual</models:FilterOperator>
+                  <models:FilterOperator>IsNull</models:FilterOperator>
+                  <models:FilterOperator>IsNotNull</models:FilterOperator>
+                </ComboBox>
+                <TextBox Text="{Binding Value}" Width="200" Watermark="值" />
+                <Button Content="✕"
+                        Command="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).RemoveFilterCommand}"
+                        CommandParameter="{Binding}" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
       </StackPanel>
       <TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red" />
       <TextBlock DockPanel.Dock="Top" Text="{Binding ResultStatus}"

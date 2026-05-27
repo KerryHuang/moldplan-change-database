@@ -36,11 +36,12 @@ public partial class ReportingQueryViewModel : ObservableObject
     public ObservableCollection<string> ResultColumns { get; } = new();
     public ObservableCollection<IReadOnlyList<object?>> ResultRows { get; } = new();
     public ObservableCollection<ReportingColumn> SelectedColumns { get; } = new();
+    public ObservableCollection<string> AvailableColumnNames { get; } = new();
     public ObservableCollection<RefreshLogEntry> RefreshLog { get; } = new();
+    public ObservableCollection<QueryFilterRow> Filters { get; } = new();
 
     [ObservableProperty] private ReportingObject? _selectedObject;
     [ObservableProperty] private int _topN = 100;
-    [ObservableProperty] private string? _whereClause;
     [ObservableProperty] private string? _orderByClause;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string? _errorMessage;
@@ -48,9 +49,16 @@ public partial class ReportingQueryViewModel : ObservableObject
 
     partial void OnSelectedObjectChanged(ReportingObject? value)
     {
+        Filters.Clear();
         _ = LoadObjectDetailAsync(value);
         if (value != null) _ = QueryAsync();
     }
+
+    [RelayCommand]
+    private void AddFilter() => Filters.Add(new QueryFilterRow());
+
+    [RelayCommand]
+    private void RemoveFilter(QueryFilterRow row) => Filters.Remove(row);
 
     public async Task UseConnectionAsync(string connectionString)
     {
@@ -62,6 +70,8 @@ public partial class ReportingQueryViewModel : ObservableObject
         ResultColumns.Clear();
         ResultRows.Clear();
         SelectedColumns.Clear();
+        AvailableColumnNames.Clear();
+        Filters.Clear();
         RefreshLog.Clear();
         ResultStatus = "切換連線中，正在載入物件清單⋯";
         await LoadObjectsAsync();
@@ -117,7 +127,7 @@ public partial class ReportingQueryViewModel : ObservableObject
         {
             IsBusy = true;
             ErrorMessage = null;
-            var result = await _query.QueryTopNAsync(SelectedObject.Name, TopN, WhereClause, OrderByClause);
+            var result = await _query.QueryTopNAsync(SelectedObject.Name, TopN, Filters, OrderByClause);
             ResultColumns.Clear();
             foreach (var c in result.Columns) ResultColumns.Add(c);
             ResultRows.Clear();
@@ -131,11 +141,14 @@ public partial class ReportingQueryViewModel : ObservableObject
     private async Task LoadObjectDetailAsync(ReportingObject? obj)
     {
         SelectedColumns.Clear();
+        AvailableColumnNames.Clear();
         RefreshLog.Clear();
         if (obj == null) return;
         try
         {
             foreach (var c in await _objects.GetColumnsAsync(obj.Name)) SelectedColumns.Add(c);
+            AvailableColumnNames.Clear();
+            foreach (var c in SelectedColumns) AvailableColumnNames.Add(c.Name);
             if (obj.Kind != ReportingObjectKind.SystemTable && obj.Kind != ReportingObjectKind.Procedure)
                 foreach (var l in await _objects.GetRefreshLogAsync(obj.Name)) RefreshLog.Add(l);
         }

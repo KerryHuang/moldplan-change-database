@@ -28,15 +28,31 @@ public class ReportingObjectService : IReportingObjectService
     }
 
     public Task<IReadOnlyList<ReportingObject>> ListTablesAsync(CancellationToken ct = default) =>
-        QueryAsync("SELECT name FROM sys.tables WHERE schema_id = SCHEMA_ID('Reporting') ORDER BY name", ClassifyTable, ct);
+        QueryAsync(@"
+            SELECT t.name, CAST(ep.value AS NVARCHAR(MAX))
+            FROM sys.tables t
+            LEFT JOIN sys.extended_properties ep
+                ON ep.major_id = t.object_id AND ep.minor_id = 0 AND ep.name = 'MS_Description'
+            WHERE t.schema_id = SCHEMA_ID('Reporting')
+            ORDER BY t.name", ClassifyTable, ct);
 
     public Task<IReadOnlyList<ReportingObject>> ListViewsAsync(CancellationToken ct = default) =>
-        QueryAsync("SELECT name FROM sys.views WHERE schema_id = SCHEMA_ID('Reporting') ORDER BY name",
-            _ => ReportingObjectKind.View, ct);
+        QueryAsync(@"
+            SELECT v.name, CAST(ep.value AS NVARCHAR(MAX))
+            FROM sys.views v
+            LEFT JOIN sys.extended_properties ep
+                ON ep.major_id = v.object_id AND ep.minor_id = 0 AND ep.name = 'MS_Description'
+            WHERE v.schema_id = SCHEMA_ID('Reporting')
+            ORDER BY v.name", _ => ReportingObjectKind.View, ct);
 
     public Task<IReadOnlyList<ReportingObject>> ListProceduresAsync(CancellationToken ct = default) =>
-        QueryAsync("SELECT name FROM sys.procedures WHERE schema_id = SCHEMA_ID('Reporting') ORDER BY name",
-            _ => ReportingObjectKind.Procedure, ct);
+        QueryAsync(@"
+            SELECT p.name, CAST(ep.value AS NVARCHAR(MAX))
+            FROM sys.procedures p
+            LEFT JOIN sys.extended_properties ep
+                ON ep.major_id = p.object_id AND ep.minor_id = 0 AND ep.name = 'MS_Description'
+            WHERE p.schema_id = SCHEMA_ID('Reporting')
+            ORDER BY p.name", _ => ReportingObjectKind.Procedure, ct);
 
     public async Task<IReadOnlyList<ReportingObject>> ListAllAsync(CancellationToken ct = default)
     {
@@ -66,7 +82,8 @@ public class ReportingObjectService : IReportingObjectService
         while (await reader.ReadAsync(ct))
         {
             var name = reader.GetString(0);
-            list.Add(new ReportingObject("Reporting", name, classify(name), null));
+            var description = reader.IsDBNull(1) ? null : reader.GetString(1);
+            list.Add(new ReportingObject("Reporting", name, classify(name), description));
         }
         return list;
     }
