@@ -39,6 +39,8 @@
         <TextBlock Text="ORDER BY:" VerticalAlignment="Center" />
         <TextBox Text="{Binding OrderByClause}" Width="150" Watermark="可空白" />
         <Button Content="查詢" Command="{Binding QueryCommand}" />
+        <TextBlock Text="載入中⋯" Foreground="DodgerBlue"
+                   VerticalAlignment="Center" IsVisible="{Binding IsBusy}" />
       </StackPanel>
       <TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red" />
       <TextBlock DockPanel.Dock="Top" Text="{Binding ResultStatus}"

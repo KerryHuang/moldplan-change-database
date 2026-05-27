@@ -56,14 +56,19 @@ public partial class ReportingQueryViewModel : ObservableObject
     {
         _objects = _objectsFactory(connectionString);
         _query = _queryFactory(connectionString);
+        SelectedObject = null;
         Objects.Clear();
         ObjectGroups.Clear();
         ResultColumns.Clear();
         ResultRows.Clear();
         SelectedColumns.Clear();
         RefreshLog.Clear();
-        ResultStatus = "請從左側選擇物件以自動載入預覽";
+        ResultStatus = "切換連線中，正在載入物件清單⋯";
         await LoadObjectsAsync();
+        if (Objects.Count == 0 && ErrorMessage == null)
+            ResultStatus = "此連線尚未部署 Reporting schema（請至「Reporting 部署」頁建立）";
+        else if (ErrorMessage == null)
+            ResultStatus = "請從左側選擇物件以自動載入預覽";
     }
 
     [RelayCommand]

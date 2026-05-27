@@ -12,6 +12,8 @@
         <TextBlock Text="{Binding ViewCount, StringFormat='Views: {0}'}" />
         <TextBlock Text="{Binding ProcedureCount, StringFormat='SP: {0}'}" />
         <Button Content="重新掃描" Command="{Binding ScanEnvironmentCommand}" />
+        <TextBlock Text="掃描中⋯" Foreground="DodgerBlue"
+                   VerticalAlignment="Center" IsVisible="{Binding IsBusy}" />
       </StackPanel>
     </Border>
 
