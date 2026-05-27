@@ -4,7 +4,7 @@ using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.Services;
 using MoldplanDbSwitcher.Services.AnsibleSync;
 using MoldplanDbSwitcher.ViewModels;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace MoldplanDbSwitcher.Tests.ViewModels;
 
@@ -36,6 +36,8 @@ public class MainWindowViewModelTests
         _appSettingsService.Load().Returns(new AppSettings());
         _appSettingsDevService = Substitute.For<IAppSettingsDevService>();
         _connectionFactory = Substitute.For<ISqlConnectionFactory>();
+        _connectionFactory.Create(Arg.Any<ConnectionProfile>()).Returns(
+            new SqlConnection("Server=localhost;Database=test;User Id=sa;Password=pass;"));
         _reportingQuery = new ReportingQueryViewModel(
             _ => Substitute.For<IReportingObjectService>(),
             _ => Substitute.For<IReportingQueryService>(),

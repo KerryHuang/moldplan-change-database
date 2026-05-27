@@ -166,9 +166,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         UpdatePreview();
         if (value == null) return;
-        var conn = _connectionFactory.Create(value);
-        if (conn == null) return;
-        var connStr = conn.ConnectionString;
+        var connStr = _connectionFactory.Create(value).ConnectionString;
         _ = ReportingQuery.UseConnectionAsync(connStr);
         _ = ReportingDeploy.UseConnectionAsync(connStr, value.Database);
     }

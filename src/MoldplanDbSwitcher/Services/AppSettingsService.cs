@@ -43,8 +43,12 @@ public class AppSettingsService : IAppSettingsService
         File.WriteAllText(_filePath, json);
     }
 
-    private const string DefaultScriptsRelative = @"docs\scripts\Reporting";
-    private const string FallbackAbsolute = @"D:\Repos\MoldPlan-Workspace\docs\scripts\Reporting";
+    private static readonly string DefaultScriptsRelative = Path.Combine("docs", "scripts", "Reporting");
+    private static readonly string FallbackAbsolute = OperatingSystem.IsWindows()
+        ? @"D:\Repos\MoldPlan-Workspace\docs\scripts\Reporting"
+        : Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            "repos", "MoldPlan-Workspace", "docs", "scripts", "Reporting");
 
     public string GetMoldPlanScriptsPath()
     {
