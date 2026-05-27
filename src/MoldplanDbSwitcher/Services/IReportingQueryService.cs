@@ -2,7 +2,11 @@ using MoldplanDbSwitcher.Models;
 
 namespace MoldplanDbSwitcher.Services;
 
-public record QueryResult(IReadOnlyList<string> Columns, IReadOnlyList<IReadOnlyList<object?>> Rows);
+public record QueryResult(
+    IReadOnlyList<string> Columns,
+    IReadOnlyList<IReadOnlyList<object?>> Rows,
+    string ExecutedSql = "",
+    string Database = "");
 
 public interface IReportingQueryService
 {

@@ -132,7 +132,7 @@ public partial class ReportingQueryViewModel : ObservableObject
             foreach (var c in result.Columns) ResultColumns.Add(c);
             ResultRows.Clear();
             foreach (var r in result.Rows) ResultRows.Add(r);
-            ResultStatus = $"共 {ResultRows.Count} 筆";
+            ResultStatus = $"共 {ResultRows.Count} 筆  ｜  DB: {result.Database}  ｜  SQL: {result.ExecutedSql}";
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
         finally { IsBusy = false; }

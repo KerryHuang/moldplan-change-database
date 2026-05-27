@@ -38,7 +38,7 @@ public class ReportingQueryService : IReportingQueryService
                 row[i] = reader.IsDBNull(i) ? null : reader.GetValue(i);
             rows.Add(row);
         }
-        return new QueryResult(cols, rows);
+        return new QueryResult(cols, rows, sql, conn.Database);
     }
 
     public async Task<QueryResult> QueryTopNAsync(string objectName, int top,
@@ -112,7 +112,7 @@ public class ReportingQueryService : IReportingQueryService
                 row[i] = reader.IsDBNull(i) ? null : reader.GetValue(i);
             rows.Add(row);
         }
-        return new QueryResult(cols, rows);
+        return new QueryResult(cols, rows, sql, conn.Database);
     }
 
     private static void EnsureValidIdentifier(string name)
