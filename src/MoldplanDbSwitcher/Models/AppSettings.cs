@@ -10,4 +10,6 @@ public class AppSettings
             ".ansible-vault-pass");
 
     public string DevDirectory { get; set; } = string.Empty;
+
+    public string? MoldPlanScriptsPath { get; set; }
 }
