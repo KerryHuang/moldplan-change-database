@@ -19,6 +19,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAppSettingsDevService _appSettingsDevService;
     private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly IUpdateCheckService _updateCheckService;
     private List<ConnectionProfile> _ansibleConnections = [];
 
     public ReportingQueryViewModel ReportingQuery { get; }
@@ -96,6 +97,10 @@ public partial class MainWindowViewModel : ObservableObject
             : $"套用完成：{success} 成功，{fail} 失敗";
     }
 
+    [ObservableProperty] private bool _updateAvailable;
+    [ObservableProperty] private string _updateBannerText = "";
+    [ObservableProperty] private string? _updateReleaseUrl;
+
     [ObservableProperty]
     private bool _isExporting;
 
@@ -143,7 +148,8 @@ public partial class MainWindowViewModel : ObservableObject
         IAppSettingsDevService appSettingsDevService,
         ISqlConnectionFactory connectionFactory,
         ReportingQueryViewModel reportingQuery,
-        ReportingDeployViewModel reportingDeploy)
+        ReportingDeployViewModel reportingDeploy,
+        IUpdateCheckService updateCheckService)
     {
         _connectionSource = connectionSource;
         _serverTxtService = serverTxtService;
@@ -157,9 +163,11 @@ public partial class MainWindowViewModel : ObservableObject
         _connectionFactory = connectionFactory;
         ReportingQuery = reportingQuery;
         ReportingDeploy = reportingDeploy;
+        _updateCheckService = updateCheckService;
 
         LoadConnections();
         DiscoverServerTxtFiles();
+        _ = CheckForUpdatesAsync();
     }
 
     partial void OnSelectedConnectionChanged(ConnectionProfile? value)
@@ -430,6 +438,25 @@ public partial class MainWindowViewModel : ObservableObject
         LoadConnections();
         StatusMessage = $"已刪除自訂連線：{profile.Name}";
     }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            var token = _appSettingsService.Load().GitHubToken;
+            var info = await _updateCheckService.CheckAsync(token);
+            if (info == null) return;
+            UpdateReleaseUrl = info.ReleaseUrl;
+            var current = System.Reflection.Assembly.GetExecutingAssembly()
+                .GetName().Version?.ToString(3) ?? "?";
+            UpdateBannerText = $"🎉 有新版 v{info.LatestVersion} 可用（目前 v{current}）";
+            UpdateAvailable = true;
+        }
+        catch { /* 靜音 */ }
+    }
+
+    [RelayCommand]
+    private void DismissUpdate() => UpdateAvailable = false;
 }
 
 public partial class ServerTxtFileItem : ObservableObject
