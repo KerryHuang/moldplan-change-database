@@ -23,6 +23,7 @@ class Program
     {
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
+        services.AddSingleton<IUpdateCheckService>(_ => new UpdateCheckService());
         services.AddSingleton<IConnectionSourceService, ConnectionSourceService>();
         services.AddSingleton<IServerTxtService, ServerTxtService>();
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
