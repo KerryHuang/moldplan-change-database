@@ -51,13 +51,28 @@ public partial class ReportingQueryPage : UserControl
             var colMeta = vm.SelectedColumns.FirstOrDefault(c =>
                 string.Equals(c.Name, colName, StringComparison.OrdinalIgnoreCase));
 
-            var headerBlock = new TextBlock { Text = colName };
+            object header;
             if (!string.IsNullOrEmpty(colMeta?.Description))
-                ToolTip.SetTip(headerBlock, colMeta.Description);
+            {
+                var panel = new StackPanel();
+                panel.Children.Add(new TextBlock { Text = colName, FontWeight = Avalonia.Media.FontWeight.SemiBold });
+                panel.Children.Add(new TextBlock
+                {
+                    Text = colMeta.Description,
+                    FontSize = 10,
+                    Foreground = Avalonia.Media.Brushes.Gray
+                });
+                ToolTip.SetTip(panel, colMeta.Description);
+                header = panel;
+            }
+            else
+            {
+                header = new TextBlock { Text = colName };
+            }
 
             var col = new DataGridTextColumn
             {
-                Header = headerBlock,
+                Header = header,
                 Binding = new Binding($"[{i}]")
             };
             grid.Columns.Add(col);
