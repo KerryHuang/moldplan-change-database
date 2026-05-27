@@ -18,7 +18,11 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IAnsibleSyncService _ansibleSyncService;
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAppSettingsDevService _appSettingsDevService;
+    private readonly ISqlConnectionFactory _connectionFactory;
     private List<ConnectionProfile> _ansibleConnections = [];
+
+    public ReportingQueryViewModel ReportingQuery { get; }
+    public ReportingDeployViewModel ReportingDeploy { get; }
 
     [ObservableProperty]
     private ObservableCollection<ConnectionProfile> _connections = [];
@@ -136,7 +140,10 @@ public partial class MainWindowViewModel : ObservableObject
         IUsageReportService usageReportService,
         IAnsibleSyncService ansibleSyncService,
         IAppSettingsService appSettingsService,
-        IAppSettingsDevService appSettingsDevService)
+        IAppSettingsDevService appSettingsDevService,
+        ISqlConnectionFactory connectionFactory,
+        ReportingQueryViewModel reportingQuery,
+        ReportingDeployViewModel reportingDeploy)
     {
         _connectionSource = connectionSource;
         _serverTxtService = serverTxtService;
@@ -147,6 +154,9 @@ public partial class MainWindowViewModel : ObservableObject
         _ansibleSyncService = ansibleSyncService;
         _appSettingsService = appSettingsService;
         _appSettingsDevService = appSettingsDevService;
+        _connectionFactory = connectionFactory;
+        ReportingQuery = reportingQuery;
+        ReportingDeploy = reportingDeploy;
 
         LoadConnections();
         DiscoverServerTxtFiles();
@@ -155,6 +165,12 @@ public partial class MainWindowViewModel : ObservableObject
     partial void OnSelectedConnectionChanged(ConnectionProfile? value)
     {
         UpdatePreview();
+        if (value == null) return;
+        var conn = _connectionFactory.Create(value);
+        if (conn == null) return;
+        var connStr = conn.ConnectionString;
+        _ = ReportingQuery.UseConnectionAsync(connStr);
+        _ = ReportingDeploy.UseConnectionAsync(connStr, value.Database);
     }
 
     partial void OnShowSpecuraiChanged(bool value) => LoadConnections();

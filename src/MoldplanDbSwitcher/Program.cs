@@ -1,3 +1,4 @@
+using System.Linq;
 using Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using MoldplanDbSwitcher.Services;
@@ -32,6 +33,43 @@ class Program
         services.AddSingleton<IConnectionExportService, ConnectionExportService>();
         services.AddSingleton<IAnsibleSyncService, AnsibleSyncService>();
         services.AddSingleton<IAppSettingsDevService, AppSettingsDevService>();
+
+        services.AddSingleton<IReportingScriptProvider>(sp =>
+            new ReportingScriptProvider(sp.GetRequiredService<IAppSettingsService>().GetMoldPlanScriptsPath()));
+        services.AddSingleton<ISqlBatchExecutor, SqlBatchExecutor>();
+
+        services.AddTransient<Func<string, IReportingObjectService>>(_ => connStr => new ReportingObjectService(connStr));
+        services.AddTransient<Func<string, IReportingQueryService>>(_ => connStr => new ReportingQueryService(connStr));
+        services.AddTransient<Func<string, IReportingDeployService>>(sp => connStr =>
+            new ReportingDeployService(connStr,
+                sp.GetRequiredService<IReportingScriptProvider>(),
+                sp.GetRequiredService<ISqlBatchExecutor>()));
+
+        services.AddSingleton<ReportingQueryViewModel>(sp =>
+        {
+            var factory = sp.GetRequiredService<ISqlConnectionFactory>();
+            var settings = sp.GetRequiredService<ISettingsService>();
+            var profile = settings.LoadProfiles().FirstOrDefault();
+            var connStr = profile != null ? factory.Create(profile).ConnectionString : "";
+            return new ReportingQueryViewModel(
+                sp.GetRequiredService<Func<string, IReportingObjectService>>(),
+                sp.GetRequiredService<Func<string, IReportingQueryService>>(),
+                connStr);
+        });
+
+        services.AddSingleton<ReportingDeployViewModel>(sp =>
+        {
+            var factory = sp.GetRequiredService<ISqlConnectionFactory>();
+            var settings = sp.GetRequiredService<ISettingsService>();
+            var profile = settings.LoadProfiles().FirstOrDefault();
+            var connStr = profile != null ? factory.Create(profile).ConnectionString : "";
+            return new ReportingDeployViewModel(
+                sp.GetRequiredService<Func<string, IReportingObjectService>>(),
+                sp.GetRequiredService<Func<string, IReportingDeployService>>(),
+                connStr,
+                profile?.Database ?? "");
+        });
+
         services.AddTransient<MainWindowViewModel>();
     }
 

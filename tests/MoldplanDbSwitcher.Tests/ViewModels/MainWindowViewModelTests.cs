@@ -4,6 +4,7 @@ using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.Services;
 using MoldplanDbSwitcher.Services.AnsibleSync;
 using MoldplanDbSwitcher.ViewModels;
+using System.Data.SqlClient;
 
 namespace MoldplanDbSwitcher.Tests.ViewModels;
 
@@ -18,6 +19,9 @@ public class MainWindowViewModelTests
     private readonly IAnsibleSyncService _ansibleSyncService;
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAppSettingsDevService _appSettingsDevService;
+    private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly ReportingQueryViewModel _reportingQuery;
+    private readonly ReportingDeployViewModel _reportingDeploy;
 
     public MainWindowViewModelTests()
     {
@@ -31,6 +35,15 @@ public class MainWindowViewModelTests
         _appSettingsService = Substitute.For<IAppSettingsService>();
         _appSettingsService.Load().Returns(new AppSettings());
         _appSettingsDevService = Substitute.For<IAppSettingsDevService>();
+        _connectionFactory = Substitute.For<ISqlConnectionFactory>();
+        _reportingQuery = new ReportingQueryViewModel(
+            _ => Substitute.For<IReportingObjectService>(),
+            _ => Substitute.For<IReportingQueryService>(),
+            "");
+        _reportingDeploy = new ReportingDeployViewModel(
+            _ => Substitute.For<IReportingObjectService>(),
+            _ => Substitute.For<IReportingDeployService>(),
+            "", "");
 
         _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
         {
@@ -43,7 +56,8 @@ public class MainWindowViewModelTests
     private MainWindowViewModel CreateVm() => new(
         _connectionSource, _serverTxtService, _settingsService,
         _featureReportService, _connectionExportService, _usageReportService,
-        _ansibleSyncService, _appSettingsService, _appSettingsDevService);
+        _ansibleSyncService, _appSettingsService, _appSettingsDevService,
+        _connectionFactory, _reportingQuery, _reportingDeploy);
 
     [Fact]
     public void Constructor_LoadsConnections()
