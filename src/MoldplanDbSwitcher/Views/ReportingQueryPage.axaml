@@ -4,27 +4,36 @@
              xmlns:models="using:MoldplanDbSwitcher.Models"
              x:Class="MoldplanDbSwitcher.Views.ReportingQueryPage"
              x:DataType="vm:ReportingQueryViewModel">
-  <Grid ColumnDefinitions="280,*" Margin="8">
+  <Grid ColumnDefinitions="360,*" Margin="8">
     <DockPanel Grid.Column="0">
       <Button DockPanel.Dock="Top" Content="重新整理"
               Command="{Binding LoadObjectsCommand}" Margin="0,0,0,8" />
-      <ListBox ItemsSource="{Binding Objects}"
-               SelectedItem="{Binding SelectedObject}">
-        <ListBox.ItemTemplate>
-          <DataTemplate DataType="models:ReportingObject">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="{Binding Kind}" FontSize="10" Foreground="Gray" />
-              <TextBlock Text="{Binding Name}" />
-            </StackPanel>
-          </DataTemplate>
-        </ListBox.ItemTemplate>
-      </ListBox>
+      <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding ObjectGroups}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:ReportingObjectGroup">
+              <StackPanel Margin="0,0,0,8">
+                <TextBlock Text="{Binding Header}" FontWeight="Bold" FontSize="11"
+                           Foreground="#888" Margin="4,4,0,2" />
+                <ListBox ItemsSource="{Binding Items}"
+                         SelectionChanged="OnGroupListBoxSelectionChanged">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate DataType="models:ReportingObject">
+                      <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
     </DockPanel>
 
     <DockPanel Grid.Column="1" Margin="8,0,0,0">
       <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
         <TextBlock Text="Top:" VerticalAlignment="Center" />
-        <NumericUpDown Value="{Binding TopN}" Minimum="1" Maximum="10000" Width="100" />
+        <NumericUpDown Value="{Binding TopN}" Minimum="1" Maximum="10000" Width="140" />
         <TextBlock Text="WHERE:" VerticalAlignment="Center" />
         <TextBox Text="{Binding WhereClause}" Width="200" Watermark="可空白" />
         <TextBlock Text="ORDER BY:" VerticalAlignment="Center" />
@@ -32,6 +41,8 @@
         <Button Content="查詢" Command="{Binding QueryCommand}" />
       </StackPanel>
       <TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red" />
+      <TextBlock DockPanel.Dock="Top" Text="{Binding ResultStatus}"
+                 Foreground="#888" FontSize="11" Margin="0,4,0,4" />
       <TabControl>
         <TabItem Header="預覽">
           <DataGrid Name="ResultGrid" ItemsSource="{Binding ResultRows}"

@@ -1,13 +1,18 @@
 using System;
 using System.Collections.Specialized;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Data;
+using Avalonia.VisualTree;
+using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.ViewModels;
 
 namespace MoldplanDbSwitcher.Views;
 
 public partial class ReportingQueryPage : UserControl
 {
+    private bool _settingSelection;
+
     public ReportingQueryPage()
     {
         InitializeComponent();
@@ -39,6 +44,30 @@ public partial class ReportingQueryPage : UserControl
                 Header = vm.ResultColumns[i],
                 Binding = new Binding($"[{i}]")
             });
+        }
+    }
+
+    internal void OnGroupListBoxSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_settingSelection) return;
+        if (DataContext is not ReportingQueryViewModel vm) return;
+        if (sender is not ListBox selectedListBox) return;
+        if (selectedListBox.SelectedItem is not ReportingObject selected) return;
+
+        _settingSelection = true;
+        try
+        {
+            vm.SelectedObject = selected;
+            // Deselect all other group ListBoxes
+            foreach (var lb in this.GetVisualDescendants().OfType<ListBox>())
+            {
+                if (!ReferenceEquals(lb, selectedListBox))
+                    lb.SelectedItem = null;
+            }
+        }
+        finally
+        {
+            _settingSelection = false;
         }
     }
 }

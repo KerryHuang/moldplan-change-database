@@ -6,6 +6,13 @@ using MoldplanDbSwitcher.Services;
 
 namespace MoldplanDbSwitcher.ViewModels;
 
+public partial class ReportingObjectGroup : ObservableObject
+{
+    public string Header { get; }
+    public ObservableCollection<ReportingObject> Items { get; } = new();
+    public ReportingObjectGroup(string header) { Header = header; }
+}
+
 public partial class ReportingQueryViewModel : ObservableObject
 {
     private readonly Func<string, IReportingObjectService> _objectsFactory;
@@ -25,6 +32,7 @@ public partial class ReportingQueryViewModel : ObservableObject
     }
 
     public ObservableCollection<ReportingObject> Objects { get; } = new();
+    public ObservableCollection<ReportingObjectGroup> ObjectGroups { get; } = new();
     public ObservableCollection<string> ResultColumns { get; } = new();
     public ObservableCollection<IReadOnlyList<object?>> ResultRows { get; } = new();
     public ObservableCollection<ReportingColumn> SelectedColumns { get; } = new();
@@ -36,10 +44,12 @@ public partial class ReportingQueryViewModel : ObservableObject
     [ObservableProperty] private string? _orderByClause;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] private string _resultStatus = "請從左側選擇物件以自動載入預覽";
 
     partial void OnSelectedObjectChanged(ReportingObject? value)
     {
         _ = LoadObjectDetailAsync(value);
+        if (value != null) _ = QueryAsync();
     }
 
     public async Task UseConnectionAsync(string connectionString)
@@ -47,10 +57,12 @@ public partial class ReportingQueryViewModel : ObservableObject
         _objects = _objectsFactory(connectionString);
         _query = _queryFactory(connectionString);
         Objects.Clear();
+        ObjectGroups.Clear();
         ResultColumns.Clear();
         ResultRows.Clear();
         SelectedColumns.Clear();
         RefreshLog.Clear();
+        ResultStatus = "請從左側選擇物件以自動載入預覽";
         await LoadObjectsAsync();
     }
 
@@ -65,9 +77,31 @@ public partial class ReportingQueryViewModel : ObservableObject
             foreach (var o in await _objects.ListTablesAsync()) Objects.Add(o);
             foreach (var o in await _objects.ListViewsAsync()) Objects.Add(o);
             foreach (var o in await _objects.ListProceduresAsync()) Objects.Add(o);
+            RebuildGroups();
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
         finally { IsBusy = false; }
+    }
+
+    private void RebuildGroups()
+    {
+        ObjectGroups.Clear();
+        var order = new[]
+        {
+            (ReportingObjectKind.BaseTable, "Base Tables"),
+            (ReportingObjectKind.SummaryTable, "Summary Tables"),
+            (ReportingObjectKind.View, "Views"),
+            (ReportingObjectKind.Procedure, "Procedures"),
+            (ReportingObjectKind.SystemTable, "System Tables"),
+        };
+        foreach (var (kind, header) in order)
+        {
+            var items = Objects.Where(o => o.Kind == kind).ToList();
+            if (items.Count == 0) continue;
+            var group = new ReportingObjectGroup($"{header} ({items.Count})");
+            foreach (var i in items) group.Items.Add(i);
+            ObjectGroups.Add(group);
+        }
     }
 
     [RelayCommand]
@@ -83,6 +117,7 @@ public partial class ReportingQueryViewModel : ObservableObject
             foreach (var c in result.Columns) ResultColumns.Add(c);
             ResultRows.Clear();
             foreach (var r in result.Rows) ResultRows.Add(r);
+            ResultStatus = $"共 {ResultRows.Count} 筆";
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
         finally { IsBusy = false; }
