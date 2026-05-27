@@ -66,7 +66,7 @@ public class ReportingQueryServiceTests : IClassFixture<LocalDbFixture>
         var sut = new ReportingQueryService(_db.ConnectionString);
         var filters = new[]
         {
-            new QueryFilterRow { ColumnName = "Name", Operator = FilterOperator.Equals, Value = "alpha" }
+            new QueryFilterRow { SelectedColumn = new ReportingColumn("Name", "nvarchar(50)", true, null), Operator = FilterOperator.Equals, Value = "alpha" }
         };
 
         var result = await sut.QueryTopNAsync("QT2", top: 100, filters: filters, orderBy: "Id");
@@ -88,7 +88,7 @@ public class ReportingQueryServiceTests : IClassFixture<LocalDbFixture>
         var sut = new ReportingQueryService(_db.ConnectionString);
         var filters = new[]
         {
-            new QueryFilterRow { ColumnName = "Name", Operator = FilterOperator.Contains, Value = "apple" }
+            new QueryFilterRow { SelectedColumn = new ReportingColumn("Name", "nvarchar(50)", true, null), Operator = FilterOperator.Contains, Value = "apple" }
         };
 
         var result = await sut.QueryTopNAsync("QT3", top: 100, filters: filters, orderBy: "Id");
@@ -108,7 +108,7 @@ public class ReportingQueryServiceTests : IClassFixture<LocalDbFixture>
         var sut = new ReportingQueryService(_db.ConnectionString);
         var filters = new[]
         {
-            new QueryFilterRow { ColumnName = "Name", Operator = FilterOperator.IsNull }
+            new QueryFilterRow { SelectedColumn = new ReportingColumn("Name", "nvarchar(50)", true, null), Operator = FilterOperator.IsNull }
         };
 
         var result = await sut.QueryTopNAsync("QT4", top: 100, filters: filters, orderBy: null);

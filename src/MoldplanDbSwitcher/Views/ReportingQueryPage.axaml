@@ -51,8 +51,18 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="models:QueryFilterRow">
               <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
-                <ComboBox SelectedItem="{Binding ColumnName}" Width="200"
-                          ItemsSource="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).AvailableColumnNames}" />
+                <ComboBox SelectedItem="{Binding SelectedColumn}" Width="260"
+                          ItemsSource="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).SelectedColumns}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="models:ReportingColumn">
+                      <StackPanel>
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Text="{Binding Description}" FontSize="10" Foreground="Gray"
+                                   IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
                 <ComboBox SelectedItem="{Binding Operator}" Width="120">
                   <models:FilterOperator>Equals</models:FilterOperator>
                   <models:FilterOperator>NotEquals</models:FilterOperator>

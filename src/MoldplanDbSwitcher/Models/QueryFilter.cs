@@ -18,7 +18,12 @@ public enum FilterOperator
 
 public partial class QueryFilterRow : ObservableObject
 {
-    [ObservableProperty] private string? _columnName;
+    [ObservableProperty] private ReportingColumn? _selectedColumn;
     [ObservableProperty] private FilterOperator _operator = FilterOperator.Equals;
     [ObservableProperty] private string? _value;
+
+    public string? ColumnName => SelectedColumn?.Name;
+
+    partial void OnSelectedColumnChanged(ReportingColumn? value) =>
+        OnPropertyChanged(nameof(ColumnName));
 }
