@@ -16,7 +16,7 @@
     <StackPanel Orientation="Horizontal" Spacing="8">
       <TextBlock Text="目前連線：" VerticalAlignment="Center" FontWeight="Bold" />
       <ComboBox ItemsSource="{Binding Connections}"
-                SelectedItem="{Binding SelectedConnection}"
+                SelectedItem="{Binding SelectedConnection, Mode=TwoWay}"
                 Width="400">
         <ComboBox.ItemTemplate>
           <DataTemplate DataType="models:ConnectionProfile">
