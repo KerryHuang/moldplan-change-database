@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MoldplanDbSwitcher.ViewModels"
+        x:Class="MoldplanDbSwitcher.Views.DropConfirmDialog"
+        x:DataType="vm:DropConfirmDialogViewModel"
+        Title="⚠️ 確認移除 Reporting 物件"
+        Width="500" Height="240"
+        WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="16" Spacing="12">
+    <TextBlock TextWrapping="Wrap" Foreground="Red"
+               Text="此操作將完整移除 Reporting schema 及所有相依物件（Table / View / SP / Agent Job / RefreshLog）。無法復原！" />
+    <TextBlock>
+      <Run Text="請輸入目標資料庫名稱「" />
+      <Run Text="{Binding TargetDatabase}" FontWeight="Bold" />
+      <Run Text="」以確認：" />
+    </TextBlock>
+    <TextBox Text="{Binding TypedName}" />
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+      <Button Content="取消" Click="OnCancel" />
+      <Button Content="確認移除" Background="Crimson" Foreground="White"
+              IsEnabled="{Binding CanConfirm}" Click="OnConfirm" />
+    </StackPanel>
+  </StackPanel>
+</Window>

@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MoldplanDbSwitcher.ViewModels"
+             x:Class="MoldplanDbSwitcher.Views.ReportingDeployPage"
+             x:DataType="vm:ReportingDeployViewModel">
+  <DockPanel Margin="8">
+    <Border DockPanel.Dock="Top" BorderBrush="Gray" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+      <StackPanel Orientation="Horizontal" Spacing="16">
+        <TextBlock Text="{Binding TargetDatabaseName, StringFormat='目標 DB: {0}'}" FontWeight="Bold" />
+        <TextBlock Text="{Binding SchemaExists, StringFormat='Schema: {0}'}" />
+        <TextBlock Text="{Binding TableCount, StringFormat='Tables: {0}'}" />
+        <TextBlock Text="{Binding ViewCount, StringFormat='Views: {0}'}" />
+        <TextBlock Text="{Binding ProcedureCount, StringFormat='SP: {0}'}" />
+        <Button Content="重新掃描" Command="{Binding ScanEnvironmentCommand}" />
+      </StackPanel>
+    </Border>
+
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+      <Button Content="部署全部 (01→04)" Command="{Binding DeployAllCommand}" />
+      <Button Content="部署 Daily Job (05)" Command="{Binding DeployDailyJobCommand}" />
+      <Button Content="部署 Hourly Job (06)" Command="{Binding DeployHourlyJobCommand}" />
+      <TextBlock Text="Job Owner:" VerticalAlignment="Center" Margin="16,0,0,0" />
+      <TextBox Text="{Binding JobOwner}" Width="120" />
+      <Button Content="⚠ 移除全部 (98)" Background="Crimson" Foreground="White"
+              Click="OnDropAllClick" />
+    </StackPanel>
+
+    <DataGrid ItemsSource="{Binding Steps}" IsReadOnly="True" AutoGenerateColumns="True" />
+  </DockPanel>
+</UserControl>
