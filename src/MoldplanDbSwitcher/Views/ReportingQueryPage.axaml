@@ -39,9 +39,6 @@
         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
           <TextBlock Text="Top:" VerticalAlignment="Center" />
           <NumericUpDown Value="{Binding TopN}" Minimum="1" Maximum="10000" Width="140" />
-          <TextBlock Text="排序:" VerticalAlignment="Center" Margin="16,0,0,0" />
-          <TextBox Text="{Binding OrderByClause}" Width="200"
-                   Watermark="例：MoldNo DESC（可空白）" />
           <Button Content="+ 條件" Command="{Binding AddFilterCommand}" />
           <Button Content="查詢" Command="{Binding QueryCommand}" />
           <TextBlock Text="載入中⋯" Foreground="DodgerBlue"
@@ -51,6 +48,10 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="models:QueryFilterRow">
               <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                <ComboBox SelectedItem="{Binding Connector}" Width="70">
+                  <models:FilterConnector>And</models:FilterConnector>
+                  <models:FilterConnector>Or</models:FilterConnector>
+                </ComboBox>
                 <ComboBox SelectedItem="{Binding SelectedColumn}" Width="260"
                           ItemsSource="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).SelectedColumns}">
                   <ComboBox.ItemTemplate>
@@ -78,6 +79,37 @@
                 <TextBox Text="{Binding Value}" Width="200" Watermark="值" />
                 <Button Content="✕"
                         Command="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).RemoveFilterCommand}"
+                        CommandParameter="{Binding}" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,2">
+          <TextBlock Text="排序" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <Button Content="+ 排序" Command="{Binding AddSortCommand}" />
+        </StackPanel>
+        <ItemsControl ItemsSource="{Binding Sorts}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="models:QuerySortRow">
+              <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                <ComboBox SelectedItem="{Binding SelectedColumn}" Width="260"
+                          ItemsSource="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).SelectedColumns}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="models:ReportingColumn">
+                      <StackPanel>
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Text="{Binding Description}" FontSize="10" Foreground="Gray"
+                                   IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+                <ComboBox SelectedItem="{Binding Direction}" Width="100">
+                  <models:SortDirection>Ascending</models:SortDirection>
+                  <models:SortDirection>Descending</models:SortDirection>
+                </ComboBox>
+                <Button Content="✕"
+                        Command="{Binding $parent[UserControl].((vm:ReportingQueryViewModel)DataContext).RemoveSortCommand}"
                         CommandParameter="{Binding}" />
               </StackPanel>
             </DataTemplate>

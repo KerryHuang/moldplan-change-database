@@ -39,10 +39,10 @@ public partial class ReportingQueryViewModel : ObservableObject
     public ObservableCollection<string> AvailableColumnNames { get; } = new();
     public ObservableCollection<RefreshLogEntry> RefreshLog { get; } = new();
     public ObservableCollection<QueryFilterRow> Filters { get; } = new();
+    public ObservableCollection<QuerySortRow> Sorts { get; } = new();
 
     [ObservableProperty] private ReportingObject? _selectedObject;
     [ObservableProperty] private int _topN = 100;
-    [ObservableProperty] private string? _orderByClause;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private string _resultStatus = "請從左側選擇物件以自動載入預覽";
@@ -50,6 +50,7 @@ public partial class ReportingQueryViewModel : ObservableObject
     partial void OnSelectedObjectChanged(ReportingObject? value)
     {
         Filters.Clear();
+        Sorts.Clear();
         _ = LoadObjectDetailAsync(value);
         if (value != null) _ = QueryAsync();
     }
@@ -59,6 +60,12 @@ public partial class ReportingQueryViewModel : ObservableObject
 
     [RelayCommand]
     private void RemoveFilter(QueryFilterRow row) => Filters.Remove(row);
+
+    [RelayCommand]
+    private void AddSort() => Sorts.Add(new QuerySortRow());
+
+    [RelayCommand]
+    private void RemoveSort(QuerySortRow row) => Sorts.Remove(row);
 
     public async Task UseConnectionAsync(string connectionString)
     {
@@ -73,6 +80,7 @@ public partial class ReportingQueryViewModel : ObservableObject
         SelectedColumns.Clear();
         AvailableColumnNames.Clear();
         Filters.Clear();
+        Sorts.Clear();
         RefreshLog.Clear();
         ResultStatus = $"切換連線中（目標 DB: {dbHint}），載入物件清單⋯";
         await LoadObjectsAsync();
@@ -137,7 +145,7 @@ public partial class ReportingQueryViewModel : ObservableObject
         {
             IsBusy = true;
             ErrorMessage = null;
-            var result = await _query.QueryTopNAsync(SelectedObject.Name, TopN, Filters, OrderByClause);
+            var result = await _query.QueryTopNAsync(SelectedObject.Name, TopN, Filters, Sorts);
             ResultColumns.Clear();
             foreach (var c in result.Columns) ResultColumns.Add(c);
             ResultRows.Clear();

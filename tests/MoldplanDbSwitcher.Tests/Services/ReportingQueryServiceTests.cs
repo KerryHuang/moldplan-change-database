@@ -116,4 +116,57 @@ public class ReportingQueryServiceTests : IClassFixture<LocalDbFixture>
         Assert.Single(result.Rows);
         Assert.Null(result.Rows[0][1]);
     }
+
+    [Fact]
+    public async Task QueryTopN_OrConnector_GroupsWithParens()
+    {
+        await SeedAsync(@"
+            IF SCHEMA_ID('Reporting') IS NULL EXEC('CREATE SCHEMA Reporting');
+            IF OBJECT_ID('Reporting.QT5') IS NOT NULL DROP TABLE Reporting.QT5;
+            CREATE TABLE Reporting.QT5 (Id INT, Name NVARCHAR(50));
+            INSERT INTO Reporting.QT5 VALUES (1,'alpha'),(2,'beta'),(3,'gamma');
+        ");
+        var sut = new ReportingQueryService(_db.ConnectionString);
+        var nameCol = new ReportingColumn("Name", "nvarchar(50)", true, null);
+        var filters = new[]
+        {
+            new QueryFilterRow { SelectedColumn = nameCol, Operator = FilterOperator.Equals, Value = "alpha", Connector = FilterConnector.And },
+            new QueryFilterRow { SelectedColumn = nameCol, Operator = FilterOperator.Equals, Value = "beta",  Connector = FilterConnector.Or },
+        };
+        var sorts = Array.Empty<QuerySortRow>();
+
+        var result = await sut.QueryTopNAsync("QT5", top: 100, filters: filters, sorts: sorts);
+
+        // SQL should use OR group in parens: ([Name] = @p0 OR [Name] = @p1)
+        Assert.Contains("OR", result.ExecutedSql);
+        Assert.Contains("(", result.ExecutedSql);
+        Assert.Equal(2, result.Rows.Count);
+    }
+
+    [Fact]
+    public async Task QueryTopN_MultipleSorts_BuildsOrderBy()
+    {
+        await SeedAsync(@"
+            IF SCHEMA_ID('Reporting') IS NULL EXEC('CREATE SCHEMA Reporting');
+            IF OBJECT_ID('Reporting.QT6') IS NOT NULL DROP TABLE Reporting.QT6;
+            CREATE TABLE Reporting.QT6 (Id INT, Name NVARCHAR(50));
+            INSERT INTO Reporting.QT6 VALUES (2,'b'),(1,'a'),(3,'a');
+        ");
+        var sut = new ReportingQueryService(_db.ConnectionString);
+        var sorts = new[]
+        {
+            new QuerySortRow { SelectedColumn = new ReportingColumn("Name", "nvarchar(50)", true, null), Direction = SortDirection.Ascending },
+            new QuerySortRow { SelectedColumn = new ReportingColumn("Id",   "int",          true, null), Direction = SortDirection.Descending },
+        };
+
+        var result = await sut.QueryTopNAsync("QT6", top: 100, filters: Array.Empty<QueryFilterRow>(), sorts: sorts);
+
+        Assert.Contains("[Name] ASC", result.ExecutedSql);
+        Assert.Contains("[Id] DESC", result.ExecutedSql);
+        // Rows should be sorted: Name ASC then Id DESC → (a,3),(a,1),(b,2)
+        Assert.Equal(3, result.Rows.Count);
+        Assert.Equal(3, result.Rows[0][0]); // Id=3 first (Name='a', Id DESC)
+        Assert.Equal(1, result.Rows[1][0]); // Id=1 second
+        Assert.Equal(2, result.Rows[2][0]); // Id=2 last (Name='b')
+    }
 }
