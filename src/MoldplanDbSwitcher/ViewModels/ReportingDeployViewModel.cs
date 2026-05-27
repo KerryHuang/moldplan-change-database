@@ -38,6 +38,31 @@ public partial class ReportingDeployViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string? _errorMessage;
 
+    public const int ExpectedTableCount = 14;
+    public const int ExpectedViewCount = 13;
+    public const int ExpectedProcedureCount = 13;
+
+    public bool IsFullyDeployed =>
+        SchemaExists && TableCount >= ExpectedTableCount
+                     && ViewCount >= ExpectedViewCount
+                     && ProcedureCount >= ExpectedProcedureCount;
+
+    public bool CanDeployAll => !IsBusy && !IsFullyDeployed;
+    public bool CanDropAll => !IsBusy && (SchemaExists || TableCount > 0 || ViewCount > 0 || ProcedureCount > 0);
+
+    partial void OnSchemaExistsChanged(bool value) => NotifyDeployStateChanged();
+    partial void OnTableCountChanged(int value) => NotifyDeployStateChanged();
+    partial void OnViewCountChanged(int value) => NotifyDeployStateChanged();
+    partial void OnProcedureCountChanged(int value) => NotifyDeployStateChanged();
+    partial void OnIsBusyChanged(bool value) => NotifyDeployStateChanged();
+
+    private void NotifyDeployStateChanged()
+    {
+        OnPropertyChanged(nameof(IsFullyDeployed));
+        OnPropertyChanged(nameof(CanDeployAll));
+        OnPropertyChanged(nameof(CanDropAll));
+    }
+
     public async Task UseConnectionAsync(string connectionString, string databaseName)
     {
         _objects = _objectsFactory(connectionString);
