@@ -1,0 +1,49 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MoldplanDbSwitcher.ViewModels"
+             xmlns:models="using:MoldplanDbSwitcher.Models"
+             x:Class="MoldplanDbSwitcher.Views.ReportingQueryPage"
+             x:DataType="vm:ReportingQueryViewModel">
+  <Grid ColumnDefinitions="280,*" Margin="8">
+    <DockPanel Grid.Column="0">
+      <Button DockPanel.Dock="Top" Content="重新整理"
+              Command="{Binding LoadObjectsCommand}" Margin="0,0,0,8" />
+      <ListBox ItemsSource="{Binding Objects}"
+               SelectedItem="{Binding SelectedObject}">
+        <ListBox.ItemTemplate>
+          <DataTemplate DataType="models:ReportingObject">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="{Binding Kind}" FontSize="10" Foreground="Gray" />
+              <TextBlock Text="{Binding Name}" />
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </DockPanel>
+
+    <DockPanel Grid.Column="1" Margin="8,0,0,0">
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+        <TextBlock Text="Top:" VerticalAlignment="Center" />
+        <NumericUpDown Value="{Binding TopN}" Minimum="1" Maximum="10000" Width="100" />
+        <TextBlock Text="WHERE:" VerticalAlignment="Center" />
+        <TextBox Text="{Binding WhereClause}" Width="200" Watermark="可空白" />
+        <TextBlock Text="ORDER BY:" VerticalAlignment="Center" />
+        <TextBox Text="{Binding OrderByClause}" Width="150" Watermark="可空白" />
+        <Button Content="查詢" Command="{Binding QueryCommand}" />
+      </StackPanel>
+      <TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red" />
+      <TabControl>
+        <TabItem Header="預覽">
+          <DataGrid Name="ResultGrid" ItemsSource="{Binding ResultRows}"
+                    IsReadOnly="True" AutoGenerateColumns="False" />
+        </TabItem>
+        <TabItem Header="欄位">
+          <DataGrid ItemsSource="{Binding SelectedColumns}" IsReadOnly="True" AutoGenerateColumns="True" />
+        </TabItem>
+        <TabItem Header="RefreshLog">
+          <DataGrid ItemsSource="{Binding RefreshLog}" IsReadOnly="True" AutoGenerateColumns="True" />
+        </TabItem>
+      </TabControl>
+    </DockPanel>
+  </Grid>
+</UserControl>
