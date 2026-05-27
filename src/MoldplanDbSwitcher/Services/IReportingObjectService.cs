@@ -9,4 +9,6 @@ public interface IReportingObjectService
     Task<IReadOnlyList<ReportingObject>> ListViewsAsync(CancellationToken ct = default);
     Task<IReadOnlyList<ReportingObject>> ListProceduresAsync(CancellationToken ct = default);
     Task<IReadOnlyList<ReportingObject>> ListAllAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<ReportingColumn>> GetColumnsAsync(string objectName, CancellationToken ct = default);
+    Task<IReadOnlyList<RefreshLogEntry>> GetRefreshLogAsync(string tableName, int top = 5, CancellationToken ct = default);
 }

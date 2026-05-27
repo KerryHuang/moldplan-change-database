@@ -49,4 +49,29 @@ public class ReportingObjectServiceTests : IClassFixture<LocalDbFixture>
         Assert.Contains(tables, t => t.Name == "MoldCostSummary" && t.Kind == ReportingObjectKind.SummaryTable);
         Assert.Contains(tables, t => t.Name == "RefreshLog" && t.Kind == ReportingObjectKind.SystemTable);
     }
+
+    [Fact]
+    public async Task GetColumnsAsync_ReturnsSchemaInfo()
+    {
+        await SeedAsync(@"
+            IF SCHEMA_ID('Reporting') IS NULL EXEC('CREATE SCHEMA Reporting');
+            IF OBJECT_ID('Reporting.T1') IS NOT NULL DROP TABLE Reporting.T1;
+            CREATE TABLE Reporting.T1 (Id INT NOT NULL, Name NVARCHAR(50) NULL);
+        ");
+        var sut = new ReportingObjectService(_db.ConnectionString);
+
+        var cols = await sut.GetColumnsAsync("T1");
+
+        Assert.Equal(2, cols.Count);
+        Assert.Equal("Id", cols[0].Name);
+        Assert.False(cols[0].IsNullable);
+        Assert.True(cols[1].IsNullable);
+    }
+
+    [Fact]
+    public async Task GetColumnsAsync_InvalidName_Throws()
+    {
+        var sut = new ReportingObjectService(_db.ConnectionString);
+        await Assert.ThrowsAsync<ArgumentException>(() => sut.GetColumnsAsync("T1; DROP TABLE x--"));
+    }
 }

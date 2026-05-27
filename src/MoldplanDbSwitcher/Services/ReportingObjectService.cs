@@ -70,4 +70,72 @@ public class ReportingObjectService : IReportingObjectService
         }
         return list;
     }
+
+    private static void EnsureValidIdentifier(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) ||
+            !name.All(c => char.IsLetterOrDigit(c) || c == '_'))
+            throw new ArgumentException($"無效的物件名稱: {name}", nameof(name));
+    }
+
+    public async Task<IReadOnlyList<ReportingColumn>> GetColumnsAsync(string objectName, CancellationToken ct = default)
+    {
+        EnsureValidIdentifier(objectName);
+        var list = new List<ReportingColumn>();
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT c.name, TYPE_NAME(c.user_type_id) +
+                CASE WHEN c.max_length > 0 AND TYPE_NAME(c.user_type_id) IN ('varchar','nvarchar','char','nchar')
+                     THEN '(' + CAST(c.max_length AS VARCHAR) + ')' ELSE '' END,
+                c.is_nullable,
+                CAST(ep.value AS NVARCHAR(MAX))
+            FROM sys.columns c
+            LEFT JOIN sys.extended_properties ep
+                ON ep.major_id = c.object_id AND ep.minor_id = c.column_id AND ep.name = 'MS_Description'
+            WHERE c.object_id = OBJECT_ID(@obj)
+            ORDER BY c.column_id;";
+        cmd.Parameters.AddWithValue("@obj", $"Reporting.{objectName}");
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+            list.Add(new ReportingColumn(
+                reader.GetString(0), reader.GetString(1), reader.GetBoolean(2),
+                reader.IsDBNull(3) ? null : reader.GetString(3)));
+        return list;
+    }
+
+    public async Task<IReadOnlyList<RefreshLogEntry>> GetRefreshLogAsync(string tableName, int top = 5, CancellationToken ct = default)
+    {
+        EnsureValidIdentifier(tableName);
+        var list = new List<RefreshLogEntry>();
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync(ct);
+        if (!await TableExistsAsync(conn, "RefreshLog", ct)) return list;
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT TOP (@top) StartTime, EndTime, Status, RowCount, ErrorMessage
+            FROM Reporting.RefreshLog
+            WHERE TableName = @t
+            ORDER BY StartTime DESC;";
+        cmd.Parameters.AddWithValue("@top", top);
+        cmd.Parameters.AddWithValue("@t", tableName);
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+            list.Add(new RefreshLogEntry(
+                reader.GetDateTime(0),
+                reader.IsDBNull(1) ? null : reader.GetDateTime(1),
+                reader.GetString(2),
+                reader.IsDBNull(3) ? null : reader.GetInt32(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4)));
+        return list;
+    }
+
+    private static async Task<bool> TableExistsAsync(SqlConnection conn, string name, CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT CASE WHEN OBJECT_ID('Reporting.' + @n, 'U') IS NOT NULL THEN 1 ELSE 0 END";
+        cmd.Parameters.AddWithValue("@n", name);
+        return Convert.ToInt32(await cmd.ExecuteScalarAsync(ct)) == 1;
+    }
 }
