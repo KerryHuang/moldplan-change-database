@@ -83,15 +83,15 @@ public partial class MainWindow : Window
         var result = await dialog.ShowDialog<ConnectionDialogViewModel?>(this);
         if (result is not null && DataContext is MainWindowViewModel vm)
         {
-            vm.AddCustomConnection(result.Name, result.Server, result.Database);
+            vm.AddCustomConnection(result.Name, result.Server, result.Database, result.Environment);
         }
     }
 
-    private void OnDeleteConnectionClick(object? sender, RoutedEventArgs e)
+    private async void OnDeleteConnectionClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is MainWindowViewModel vm && vm.SelectedConnection is { Source: "Custom" } profile)
         {
-            vm.DeleteCustomConnection(profile);
+            await vm.DeleteCustomConnection(profile);
         }
     }
 
@@ -119,6 +119,12 @@ public partial class MainWindow : Window
         {
             var dialog = new ApplyDevDialog(files, profile);
             return await dialog.ShowDialog<IReadOnlyList<string>?>(this);
+        };
+
+        vm.ConfirmCallback = async (message, banner) =>
+        {
+            var dialog = new ConfirmDialog(message, banner);
+            return await dialog.ShowDialog<bool>(this);
         };
     }
 

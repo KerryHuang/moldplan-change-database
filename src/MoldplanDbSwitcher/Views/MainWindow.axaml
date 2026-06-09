@@ -31,13 +31,7 @@
                 Width="400">
         <ComboBox.ItemTemplate>
           <DataTemplate DataType="models:ConnectionProfile">
-            <TextBlock>
-              <Run Text="{Binding Name}" />
-              <Run Text=" — " Foreground="Gray" />
-              <Run Text="{Binding Server}" Foreground="Gray" />
-              <Run Text=" / " Foreground="Gray" />
-              <Run Text="{Binding Database}" Foreground="Gray" />
-            </TextBlock>
+            <TextBlock Text="{Binding Converter={StaticResource ConnectionProfileDisplayConverter}}" />
           </DataTemplate>
         </ComboBox.ItemTemplate>
       </ComboBox>
@@ -145,6 +139,8 @@
                     CanUserResizeColumns="True">
             <DataGrid.Columns>
               <DataGridTextColumn Header="來源" Binding="{Binding Source}" Width="80" />
+              <DataGridTextColumn Header="環境" Width="90"
+                                  Binding="{Binding Environment, Converter={StaticResource DatabaseEnvironmentDisplayConverter}}" />
               <DataGridTextColumn Header="名稱" Binding="{Binding Name}" Width="*" />
               <DataGridTextColumn Header="伺服器" Binding="{Binding Server}" Width="*" />
               <DataGridTextColumn Header="資料庫" Binding="{Binding Database}" Width="*" />

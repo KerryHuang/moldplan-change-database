@@ -17,13 +17,21 @@ public partial class ImportConnectionsWindow : Window
             vm.DecryptAndLoad();
     }
 
-    private void OnImportClick(object? sender, RoutedEventArgs e)
+    private async void OnImportClick(object? sender, RoutedEventArgs e)
     {
-        if (DataContext is ImportConnectionsViewModel vm)
+        if (DataContext is not ImportConnectionsViewModel vm) return;
+
+        if (vm.HasProductionOverwrite())
         {
-            var result = vm.ExecuteImport();
-            Close(result);
+            var confirm = new ConfirmDialog(
+                "匯入清單將覆蓋既有的正式環境連線，確定要繼續嗎？",
+                "⚠ 此次匯入包含 Production（正式環境）連線的覆蓋");
+            var ok = await confirm.ShowDialog<bool>(this);
+            if (!ok) return;
         }
+
+        var result = vm.ExecuteImport();
+        Close(result);
     }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e) => Close();

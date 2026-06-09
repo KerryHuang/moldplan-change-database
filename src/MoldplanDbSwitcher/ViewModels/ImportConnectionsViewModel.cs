@@ -112,6 +112,14 @@ public partial class ImportConnectionsViewModel : ObservableObject
             item.ConflictAction = ConflictAction.Skip;
     }
 
+    /// <summary>是否有選擇覆蓋且涉及 Production 環境的項目（供匯入前防呆）。</summary>
+    public bool HasProductionOverwrite()
+        => ImportPreviews.Any(item =>
+            item.HasConflict
+            && item.ConflictAction == ConflictAction.Overwrite
+            && (item.Profile.Environment == DatabaseEnvironment.Production
+                || item.ExistingProfile?.Environment == DatabaseEnvironment.Production));
+
     public ImportResult ExecuteImport()
     {
         var added = 0;
