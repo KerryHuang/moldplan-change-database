@@ -418,13 +418,14 @@ public partial class MainWindowViewModel : ObservableObject
         StatusMessage = "已重新整理";
     }
 
-    public void AddCustomConnection(string name, string server, string database)
+    public void AddCustomConnection(string name, string server, string database, DatabaseEnvironment environment)
     {
         var profile = new ConnectionProfile
         {
             Name = name,
             Server = server,
-            Database = database
+            Database = database,
+            Environment = environment
         };
         _settingsService.AddProfile(profile);
         LoadConnections();

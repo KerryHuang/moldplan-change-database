@@ -83,7 +83,7 @@ public partial class MainWindow : Window
         var result = await dialog.ShowDialog<ConnectionDialogViewModel?>(this);
         if (result is not null && DataContext is MainWindowViewModel vm)
         {
-            vm.AddCustomConnection(result.Name, result.Server, result.Database);
+            vm.AddCustomConnection(result.Name, result.Server, result.Database, result.Environment);
         }
     }
 

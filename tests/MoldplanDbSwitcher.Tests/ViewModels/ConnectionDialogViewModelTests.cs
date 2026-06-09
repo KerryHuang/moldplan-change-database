@@ -1,4 +1,5 @@
 using Xunit;
+using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.ViewModels;
 
 namespace MoldplanDbSwitcher.Tests.ViewModels;
@@ -31,5 +32,20 @@ public class ConnectionDialogViewModelTests
             Database = database
         };
         Assert.False(vm.IsValid);
+    }
+
+    [Fact]
+    public void Environment_預設為Staging()
+    {
+        var vm = new ConnectionDialogViewModel();
+        Assert.Equal(DatabaseEnvironment.Staging, vm.Environment);
+    }
+
+    [Fact]
+    public void EnvironmentOptions_含四個值()
+    {
+        Assert.Equal(
+            new[] { DatabaseEnvironment.Development, DatabaseEnvironment.Testing, DatabaseEnvironment.Staging, DatabaseEnvironment.Production },
+            ConnectionDialogViewModel.EnvironmentOptions.ToArray());
     }
 }

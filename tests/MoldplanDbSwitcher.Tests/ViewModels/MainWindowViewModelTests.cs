@@ -124,10 +124,11 @@ public class MainWindowViewModelTests
     public void AddCustomConnection_CallsSettingsService()
     {
         var vm = CreateVm();
-        vm.AddCustomConnection("new", "10.0.0.1", "testdb");
+        vm.AddCustomConnection("new", "10.0.0.1", "testdb", DatabaseEnvironment.Production);
 
         _settingsService.Received(1).AddProfile(Arg.Is<ConnectionProfile>(
-            p => p.Name == "new" && p.Server == "10.0.0.1" && p.Database == "testdb"));
+            p => p.Name == "new" && p.Server == "10.0.0.1" && p.Database == "testdb"
+              && p.Environment == DatabaseEnvironment.Production));
     }
 
     [Fact]
