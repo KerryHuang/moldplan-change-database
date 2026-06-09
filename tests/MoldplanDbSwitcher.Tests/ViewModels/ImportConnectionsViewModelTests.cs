@@ -173,6 +173,42 @@ public class ImportConnectionsViewModelTests
     }
 
     [Fact]
+    public void HasProductionOverwrite_有Production覆蓋時為True()
+    {
+        var existing = new List<ConnectionProfile>
+        {
+            new() { Id = "1", Name = "prod", Server = "s", Database = "d", Environment = DatabaseEnvironment.Production, Source = "Custom" }
+        };
+        var vm = new ImportConnectionsViewModel(
+            Substitute.For<IConnectionExportService>(), Substitute.For<ISettingsService>(), existing);
+        var incoming = new ConnectionProfile { Name = "prod", Server = "s2", Database = "d2", Environment = DatabaseEnvironment.Production };
+        vm.ImportPreviews.Add(new ImportPreviewItem(incoming, hasConflict: true, existingProfile: existing[0])
+        {
+            ConflictAction = ConflictAction.Overwrite
+        });
+
+        Assert.True(vm.HasProductionOverwrite());
+    }
+
+    [Fact]
+    public void HasProductionOverwrite_跳過或非Production時為False()
+    {
+        var existing = new List<ConnectionProfile>
+        {
+            new() { Id = "1", Name = "dev", Server = "s", Database = "d", Environment = DatabaseEnvironment.Development, Source = "Custom" }
+        };
+        var vm = new ImportConnectionsViewModel(
+            Substitute.For<IConnectionExportService>(), Substitute.For<ISettingsService>(), existing);
+        var incoming = new ConnectionProfile { Name = "dev", Server = "s2", Database = "d2", Environment = DatabaseEnvironment.Development };
+        vm.ImportPreviews.Add(new ImportPreviewItem(incoming, hasConflict: true, existingProfile: existing[0])
+        {
+            ConflictAction = ConflictAction.Skip
+        });
+
+        Assert.False(vm.HasProductionOverwrite());
+    }
+
+    [Fact]
     public void ExecuteImport_SkipConflict_DoesNotUpdate()
     {
         var data = new byte[] { 1 };
