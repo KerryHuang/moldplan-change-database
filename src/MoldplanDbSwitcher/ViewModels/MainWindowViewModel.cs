@@ -194,7 +194,8 @@ public partial class MainWindowViewModel : ObservableObject
         if (ShowAnsible)
             all.AddRange(_ansibleConnections);
 
-        Connections = new ObservableCollection<ConnectionProfile>(all);
+        Connections = new ObservableCollection<ConnectionProfile>(
+            all.OrderBy(p => p, ConnectionProfileComparer.Instance));
         SelectedConnection = Connections.FirstOrDefault();
     }
 
@@ -206,6 +207,8 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             _ansibleConnections = await _ansibleSyncService.SyncAsync();
+            foreach (var p in _ansibleConnections)
+                p.Environment = DatabaseEnvironmentInference.FromName(p.Name);
             LoadConnections();
             StatusMessage = $"已同步 {_ansibleConnections.Count} 個 Ansible 連線";
         }

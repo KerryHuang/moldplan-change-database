@@ -259,6 +259,38 @@ public class MainWindowViewModelTests
             Arg.Any<IReadOnlyList<ConnectionProfile>>(), Arg.Any<IProgress<string>>());
     }
 
+    [Fact]
+    public void LoadConnections_應依預設環境名稱排序()
+    {
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "zzz", Server = "s", Database = "d", Environment = DatabaseEnvironment.Production, Source = "Specurai" },
+            new() { Name = "aaa", Server = "s", Database = "d", Environment = DatabaseEnvironment.Development, Source = "Specurai" },
+            new() { Name = "def", Server = "s", Database = "d", Environment = DatabaseEnvironment.Production, IsDefault = true, Source = "Specurai" },
+        });
+        var vm = CreateVm();
+
+        Assert.Equal(new[] { "def", "aaa", "zzz" }, vm.Connections.Select(c => c.Name).ToArray());
+    }
+
+    [Fact]
+    public async Task SyncAnsible_應依名稱推斷環境()
+    {
+        _ansibleSyncService.SyncAsync().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "客戶A - 正式", Server = "s", Database = "d", Source = "Ansible" },
+            new() { Name = "客戶A - 測試", Server = "s", Database = "d", Source = "Ansible" },
+        });
+        var vm = CreateVm();
+
+        await vm.SyncAnsibleCommand.ExecuteAsync(null);
+
+        var prod = vm.Connections.First(c => c.Name == "客戶A - 正式");
+        var test = vm.Connections.First(c => c.Name == "客戶A - 測試");
+        Assert.Equal(DatabaseEnvironment.Production, prod.Environment);
+        Assert.Equal(DatabaseEnvironment.Testing, test.Environment);
+    }
+
     private static async Task WaitForUpdateCheckAsync(MainWindowViewModel vm)
     {
         for (var i = 0; i < 50; i++)
