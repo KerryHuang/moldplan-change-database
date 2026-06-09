@@ -25,6 +25,19 @@ public class ConnectionExportServiceTests
     }
 
     [Fact]
+    public void ExportToJson_應保留Environment()
+    {
+        var profiles = new List<ConnectionProfile>
+        {
+            new() { Name = "prod", Server = "127.0.0.1", Database = "mis", Environment = DatabaseEnvironment.Production }
+        };
+        var bytes = _service.ExportToJson(profiles, includePasswords: false);
+        var data = JsonSerializer.Deserialize<ConnectionExportData>(bytes);
+        Assert.NotNull(data);
+        Assert.Equal(DatabaseEnvironment.Production, data.Profiles[0].Environment);
+    }
+
+    [Fact]
     public void ExportToJson_IncludePasswordsFalse_NullsOutPasswords()
     {
         var profiles = new List<ConnectionProfile>
