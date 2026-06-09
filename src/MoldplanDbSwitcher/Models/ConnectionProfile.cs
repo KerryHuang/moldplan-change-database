@@ -34,6 +34,9 @@ public class ConnectionProfile
     [JsonPropertyName("isDefault")]
     public bool IsDefault { get; set; }
 
+    [JsonPropertyName("environment")]
+    public DatabaseEnvironment Environment { get; set; } = DatabaseEnvironment.Staging;
+
     [JsonIgnore]
     public string Source { get; set; } = "Custom";
 }

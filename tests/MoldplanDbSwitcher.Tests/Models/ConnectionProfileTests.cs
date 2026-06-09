@@ -117,4 +117,44 @@ public class ConnectionProfileTests
         Assert.Equal(AuthenticationType.WindowsAuthentication, data.Profiles[0].AuthType);
         Assert.False(data.Profiles[0].IsDefault);
     }
+
+    [Fact]
+    public void Environment_預設為Staging()
+    {
+        var p = new ConnectionProfile { Name = "a", Server = "s", Database = "d" };
+        Assert.Equal(DatabaseEnvironment.Staging, p.Environment);
+    }
+
+    [Fact]
+    public void Environment_序列化往返應保留()
+    {
+        var p = new ConnectionProfile { Name = "a", Server = "s", Database = "d", Environment = DatabaseEnvironment.Production };
+        var json = JsonSerializer.Serialize(p);
+        var back = JsonSerializer.Deserialize<ConnectionProfile>(json);
+        Assert.Equal(DatabaseEnvironment.Production, back!.Environment);
+    }
+
+    [Fact]
+    public void Environment_序列化為數字()
+    {
+        var p = new ConnectionProfile { Name = "a", Server = "s", Database = "d", Environment = DatabaseEnvironment.Production };
+        var json = JsonSerializer.Serialize(p);
+        Assert.Contains("\"environment\":3", json);
+    }
+
+    [Fact]
+    public void 反序列化舊JSON無environment欄位_應為Staging()
+    {
+        var json = "{\"name\":\"a\",\"server\":\"s\",\"database\":\"d\",\"authType\":0}";
+        var p = JsonSerializer.Deserialize<ConnectionProfile>(json);
+        Assert.Equal(DatabaseEnvironment.Staging, p!.Environment);
+    }
+
+    [Fact]
+    public void 反序列化Specurai式PascalCase數字_應正確對應環境()
+    {
+        var json = "{\"Name\":\"a\",\"Server\":\"s\",\"Database\":\"d\",\"Environment\":3}";
+        var p = JsonSerializer.Deserialize<ConnectionProfile>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.Equal(DatabaseEnvironment.Production, p!.Environment);
+    }
 }
