@@ -209,6 +209,24 @@ public class ImportConnectionsViewModelTests
     }
 
     [Fact]
+    public void HasProductionOverwrite_既有為Production但匯入端非Production時為True()
+    {
+        var existing = new List<ConnectionProfile>
+        {
+            new() { Id = "1", Name = "x", Server = "s", Database = "d", Environment = DatabaseEnvironment.Production, Source = "Custom" }
+        };
+        var vm = new ImportConnectionsViewModel(
+            Substitute.For<IConnectionExportService>(), Substitute.For<ISettingsService>(), existing);
+        var incoming = new ConnectionProfile { Name = "x", Server = "s2", Database = "d2", Environment = DatabaseEnvironment.Staging };
+        vm.ImportPreviews.Add(new ImportPreviewItem(incoming, hasConflict: true, existingProfile: existing[0])
+        {
+            ConflictAction = ConflictAction.Overwrite
+        });
+
+        Assert.True(vm.HasProductionOverwrite());
+    }
+
+    [Fact]
     public void ExecuteImport_SkipConflict_DoesNotUpdate()
     {
         var data = new byte[] { 1 };
