@@ -70,6 +70,9 @@ public partial class MainWindowViewModel : ObservableObject
 
     public Func<IReadOnlyList<string>, ConnectionProfile, Task<IReadOnlyList<string>?>>? ApplyDevDialogCallback { get; set; }
 
+    /// <summary>Production 重大操作的確認回呼（由 View 設定）。參數：(訊息, 警告橫幅)。</summary>
+    public Func<string, string?, Task<bool>>? ConfirmCallback { get; set; }
+
     [RelayCommand]
     private async Task ApplyDevAsync()
     {
@@ -255,7 +258,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ApplyChanges()
+    private async Task ApplyChanges()
     {
         if (SelectedConnection is null)
         {
@@ -268,6 +271,18 @@ public partial class MainWindowViewModel : ObservableObject
         {
             StatusMessage = "請至少選擇一個 SERVER.txt 檔案";
             return;
+        }
+
+        if (SelectedConnection.Environment == DatabaseEnvironment.Production && ConfirmCallback is not null)
+        {
+            var confirmed = await ConfirmCallback(
+                $"確定要將 SERVER.txt 指向「{SelectedConnection.Name}」嗎？",
+                $"⚠ 正式環境 (Production)：{SelectedConnection.Database}");
+            if (!confirmed)
+            {
+                StatusMessage = "已取消套用";
+                return;
+            }
         }
 
         var successCount = 0;
@@ -435,9 +450,18 @@ public partial class MainWindowViewModel : ObservableObject
         StatusMessage = $"已新增自訂連線：{name}";
     }
 
-    public void DeleteCustomConnection(ConnectionProfile profile)
+    public async Task DeleteCustomConnection(ConnectionProfile profile)
     {
         if (profile.Source != "Custom") return;
+
+        if (profile.Environment == DatabaseEnvironment.Production && ConfirmCallback is not null)
+        {
+            var confirmed = await ConfirmCallback(
+                $"確定要刪除自訂連線「{profile.Name}」嗎？",
+                $"⚠ 正式環境 (Production)：{profile.Database}");
+            if (!confirmed) return;
+        }
+
         _settingsService.DeleteProfile(profile.Id);
         LoadConnections();
         StatusMessage = $"已刪除自訂連線：{profile.Name}";

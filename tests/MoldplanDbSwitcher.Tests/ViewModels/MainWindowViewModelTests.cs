@@ -83,29 +83,29 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public void ApplyChanges_NoSelection_SetsErrorStatus()
+    public async Task ApplyChanges_NoSelection_SetsErrorStatus()
     {
         _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>());
         var vm = CreateVm();
         vm.SelectedConnection = null;
 
-        vm.ApplyChangesCommand.Execute(null);
+        await vm.ApplyChangesCommand.ExecuteAsync(null);
 
         Assert.Contains("請先選擇", vm.StatusMessage);
     }
 
     [Fact]
-    public void ApplyChanges_NoServerTxtSelected_SetsErrorStatus()
+    public async Task ApplyChanges_NoServerTxtSelected_SetsErrorStatus()
     {
         var vm = CreateVm();
 
-        vm.ApplyChangesCommand.Execute(null);
+        await vm.ApplyChangesCommand.ExecuteAsync(null);
 
         Assert.Contains("請至少選擇", vm.StatusMessage);
     }
 
     [Fact]
-    public void ApplyChanges_Success_SetsSuccessStatus()
+    public async Task ApplyChanges_Success_SetsSuccessStatus()
     {
         _serverTxtService.DiscoverPaths().Returns(new List<string> { @"C:\WDMIS\SERVER.txt" });
         _serverTxtService.Apply(Arg.Any<string>(), Arg.Any<ConnectionProfile>()).Returns(true);
@@ -115,7 +115,7 @@ public class MainWindowViewModelTests
         });
 
         var vm = CreateVm();
-        vm.ApplyChangesCommand.Execute(null);
+        await vm.ApplyChangesCommand.ExecuteAsync(null);
 
         Assert.Contains("成功", vm.StatusMessage);
     }
@@ -132,12 +132,63 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public void DeleteCustomConnection_OnlyDeletesCustomSource()
+    public async Task DeleteCustomConnection_OnlyDeletesCustomSource()
     {
         var vm = CreateVm();
         var tableSpecProfile = new ConnectionProfile { Id = "1", Name = "dev", Source = "Specurai" };
 
-        vm.DeleteCustomConnection(tableSpecProfile);
+        await vm.DeleteCustomConnection(tableSpecProfile);
+
+        _settingsService.DidNotReceive().DeleteProfile(Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ApplyChanges_Production_確認回否_不寫SERVER_txt()
+    {
+        _serverTxtService.DiscoverPaths().Returns(new List<string> { @"C:\WDMIS\SERVER.txt" });
+        _serverTxtService.ReadEntry(Arg.Any<string>()).Returns(new ServerTxtEntry
+        { Field1 = "mis", DatabaseName = "old", ServerAddress = "0.0.0.0", Field4 = "X", Field5 = "1" });
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "prod", Server = "s", Database = "mis", Environment = DatabaseEnvironment.Production, Source = "Specurai" }
+        });
+        var vm = CreateVm();
+        vm.ConfirmCallback = (_, _) => Task.FromResult(false);
+
+        await vm.ApplyChangesCommand.ExecuteAsync(null);
+
+        _serverTxtService.DidNotReceive().Apply(Arg.Any<string>(), Arg.Any<ConnectionProfile>());
+        Assert.Contains("取消", vm.StatusMessage);
+    }
+
+    [Fact]
+    public async Task ApplyChanges_Production_確認回是_有寫SERVER_txt()
+    {
+        _serverTxtService.DiscoverPaths().Returns(new List<string> { @"C:\WDMIS\SERVER.txt" });
+        _serverTxtService.Apply(Arg.Any<string>(), Arg.Any<ConnectionProfile>()).Returns(true);
+        _serverTxtService.ReadEntry(Arg.Any<string>()).Returns(new ServerTxtEntry
+        { Field1 = "mis", DatabaseName = "old", ServerAddress = "0.0.0.0", Field4 = "X", Field5 = "1" });
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "prod", Server = "s", Database = "mis", Environment = DatabaseEnvironment.Production, Source = "Specurai" }
+        });
+        var vm = CreateVm();
+        vm.ConfirmCallback = (_, _) => Task.FromResult(true);
+
+        await vm.ApplyChangesCommand.ExecuteAsync(null);
+
+        _serverTxtService.Received().Apply(Arg.Any<string>(), Arg.Any<ConnectionProfile>());
+    }
+
+    [Fact]
+    public async Task DeleteCustomConnection_Production_確認回否_不刪除()
+    {
+        var vm = CreateVm();
+        vm.ConfirmCallback = (_, _) => Task.FromResult(false);
+        var profile = new ConnectionProfile { Id = "9", Name = "prod", Server = "s", Database = "d",
+            Environment = DatabaseEnvironment.Production, Source = "Custom" };
+
+        await vm.DeleteCustomConnection(profile);
 
         _settingsService.DidNotReceive().DeleteProfile(Arg.Any<string>());
     }
