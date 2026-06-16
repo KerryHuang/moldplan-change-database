@@ -1,0 +1,103 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MoldplanDbSwitcher.ViewModels.Documents"
+             xmlns:rootvm="using:MoldplanDbSwitcher.ViewModels"
+             xmlns:models="using:MoldplanDbSwitcher.Models"
+             x:Class="MoldplanDbSwitcher.Views.Documents.ConnectionSwitchDocumentView"
+             x:DataType="vm:ConnectionSwitchDocumentViewModel">
+
+  <DockPanel Margin="8">
+
+    <!-- 頂部：連線來源篩選 -->
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="16" Margin="0,0,0,12">
+      <TextBlock Text="連線來源：" VerticalAlignment="Center" />
+      <CheckBox Content="Specurai" IsChecked="{Binding ShowSpecurai}" />
+      <CheckBox Content="自訂" IsChecked="{Binding ShowCustom}" />
+      <CheckBox Content="Ansible" IsChecked="{Binding ShowAnsible}" />
+      <Button Content="重新整理" Command="{Binding RefreshAllCommand}" Margin="16,0,0,0" />
+      <Button Content="同步 Ansible"
+              Command="{Binding SyncAnsibleCommand}"
+              IsEnabled="{Binding CanSyncAnsible}"
+              ToolTip.Tip="請先至「設定」填入 deploy-ansible Repo 路徑" />
+    </StackPanel>
+
+    <!-- 底部：狀態列與操作按鈕 -->
+    <StackPanel DockPanel.Dock="Bottom" Spacing="8">
+      <!-- 變更前後對比 -->
+      <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="4" Padding="8"
+              IsVisible="{Binding PreviewBefore, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <StackPanel Spacing="4">
+          <TextBlock Text="變更前後對比" FontWeight="Bold" />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="變更前:" Foreground="Gray" />
+            <TextBlock Text="{Binding PreviewBefore}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="變更後:" Foreground="Green" />
+            <TextBlock Text="{Binding PreviewAfter}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- 操作按鈕 -->
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Content="套用變更" Command="{Binding ApplyChangesCommand}"
+                Classes="accent" HorizontalAlignment="Left" />
+        <Button Content="套用開發"
+                Command="{Binding ApplyDevCommand}"
+                IsVisible="{Binding HasDevDirectory}"
+                HorizontalAlignment="Left" />
+        <Button Content="新增自訂連線" Click="OnAddConnectionClick"
+                HorizontalAlignment="Left" />
+        <Button Content="刪除自訂連線" Click="OnDeleteConnectionClick"
+                HorizontalAlignment="Left" />
+      </StackPanel>
+
+      <!-- 匯出進度 -->
+      <TextBlock Text="{Binding ProgressText}" Margin="0,4,0,0"
+                 IsVisible="{Binding IsExporting}" Foreground="Blue" />
+
+      <!-- 狀態訊息 -->
+      <TextBlock Text="{Binding StatusMessage}" Margin="0,4,0,0"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    </StackPanel>
+
+    <!-- 中間：連線清單 + SERVER.txt 選擇 -->
+    <DockPanel>
+      <!-- SERVER.txt 選擇 -->
+      <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,8">
+        <TextBlock Text="SERVER.txt 位置：" FontWeight="Bold" Margin="0,0,0,4" />
+        <ItemsControl ItemsSource="{Binding ServerTxtFiles}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="rootvm:ServerTxtFileItem">
+              <CheckBox Content="{Binding Path}" IsChecked="{Binding IsSelected}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Text="找不到 SERVER.txt 檔案"
+                   IsVisible="{Binding !ServerTxtFiles.Count}"
+                   Foreground="Orange" Margin="0,4,0,0" />
+      </StackPanel>
+
+      <!-- 連線清單 DataGrid -->
+      <DataGrid ItemsSource="{Binding Connections}"
+                SelectedItem="{Binding SelectedConnection}"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                SelectionMode="Single"
+                GridLinesVisibility="Horizontal"
+                CanUserResizeColumns="True">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="來源" Binding="{Binding Source}" Width="80" />
+          <DataGridTextColumn Header="環境" Width="90"
+                              Binding="{Binding Environment, Converter={StaticResource DatabaseEnvironmentDisplayConverter}}" />
+          <DataGridTextColumn Header="名稱" Binding="{Binding Name}" Width="*" />
+          <DataGridTextColumn Header="伺服器" Binding="{Binding Server}" Width="*" />
+          <DataGridTextColumn Header="資料庫" Binding="{Binding Database}" Width="*" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </DockPanel>
+
+  </DockPanel>
+
+</UserControl>
