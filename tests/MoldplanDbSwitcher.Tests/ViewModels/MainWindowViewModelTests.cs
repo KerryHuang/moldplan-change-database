@@ -173,4 +173,44 @@ public class MainWindowViewModelTests
 
         Assert.False(vm.UpdateAvailable);
     }
+
+    [Fact]
+    public void ActiveConnectionChanged_PropagatesToOpenDocuments()
+    {
+        // 記錄 objectsFactory 被呼叫時收到的 connectionString
+        var objectFactoryCalls = new List<string>();
+
+        Func<ReportingQueryViewModel> queryFactory = () => new ReportingQueryViewModel(
+            cs =>
+            {
+                objectFactoryCalls.Add($"obj:{cs}");
+                var s = Substitute.For<IReportingObjectService>();
+                s.ListTablesAsync(Arg.Any<CancellationToken>()).Returns(new List<ReportingObject>());
+                s.ListViewsAsync(Arg.Any<CancellationToken>()).Returns(new List<ReportingObject>());
+                s.ListProceduresAsync(Arg.Any<CancellationToken>()).Returns(new List<ReportingObject>());
+                return s;
+            },
+            _ => Substitute.For<IReportingQueryService>(),
+            "");
+
+        var active = new ActiveConnectionService();
+
+        var vm = new MainWindowViewModel(
+            CreateConnectionSwitch(),
+            queryFactory,
+            CreateDeploy,
+            active,
+            _updateCheckService,
+            _appSettingsService);
+
+        // 開啟一個 ReportingQuery 文件
+        vm.OpenReportingQueryCommand.Execute(null);
+        objectFactoryCalls.Clear(); // 清除初始化時的呼叫（空字串）
+
+        // 設定新連線 → shell 應透過 OnActiveConnectionChanged 呼叫 doc.UseConnectionAsync
+        active.SetCurrent(new ActiveConnection("Server=tcp:relay;Database=R", "R", null));
+
+        // objectsFactory 在 UseConnectionAsync 一開始就同步呼叫，不需 await
+        Assert.Contains("obj:Server=tcp:relay;Database=R", objectFactoryCalls);
+    }
 }
