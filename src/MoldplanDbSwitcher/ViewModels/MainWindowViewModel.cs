@@ -15,6 +15,7 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly Func<ReportingQueryViewModel> _queryFactory;
     private readonly Func<ReportingDeployViewModel> _deployFactory;
+    private readonly Func<MonitoringDocumentViewModel> _monitorFactory;
     private readonly IActiveConnectionService _activeConnection;
     private readonly IUpdateCheckService _updateCheckService;
     private readonly IAppSettingsService _appSettingsService;
@@ -32,6 +33,7 @@ public partial class MainWindowViewModel : ObservableObject
         ConnectionSwitchDocumentViewModel connectionSwitch,
         Func<ReportingQueryViewModel> queryFactory,
         Func<ReportingDeployViewModel> deployFactory,
+        Func<MonitoringDocumentViewModel> monitorFactory,
         IActiveConnectionService activeConnection,
         IUpdateCheckService updateCheckService,
         IAppSettingsService appSettingsService)
@@ -39,6 +41,7 @@ public partial class MainWindowViewModel : ObservableObject
         ConnectionSwitch = connectionSwitch;
         _queryFactory = queryFactory;
         _deployFactory = deployFactory;
+        _monitorFactory = monitorFactory;
         _activeConnection = activeConnection;
         _updateCheckService = updateCheckService;
         _appSettingsService = appSettingsService;
@@ -85,6 +88,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     [RelayCommand] private void OpenReportingQuery() => OpenOrActivate(_queryFactory);
     [RelayCommand] private void OpenReportingDeploy() => OpenOrActivate(_deployFactory);
+    [RelayCommand] private void OpenReportingMonitor() => OpenOrActivate(_monitorFactory);
 
     private async Task CheckForUpdatesAsync()
     {

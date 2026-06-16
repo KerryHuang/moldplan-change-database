@@ -27,6 +27,7 @@
       <MenuItem Header="報表(_R)">
         <MenuItem Header="Reporting 查詢(_Q)" Command="{Binding OpenReportingQueryCommand}" />
         <MenuItem Header="Reporting 部署(_D)" Command="{Binding OpenReportingDeployCommand}" />
+        <MenuItem Header="Reporting 監控(_M)" Command="{Binding OpenReportingMonitorCommand}" />
         <Separator />
         <MenuItem Header="匯出功能差異表(_F)" Click="OnExportFeatureReportClick"
                   IsEnabled="{Binding !ConnectionSwitch.IsExporting}" />
@@ -86,6 +87,9 @@
               </DataTemplate>
               <DataTemplate DataType="vm:ReportingDeployViewModel">
                 <views:ReportingDeployPage />
+              </DataTemplate>
+              <DataTemplate DataType="docs:MonitoringDocumentViewModel">
+                <dviews:MonitoringDocumentView />
               </DataTemplate>
             </ContentControl.DataTemplates>
           </ContentControl>

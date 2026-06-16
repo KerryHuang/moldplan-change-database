@@ -80,6 +80,18 @@ class Program
 
         services.AddTransient<Func<ReportingQueryViewModel>>(sp => () => sp.GetRequiredService<ReportingQueryViewModel>());
         services.AddTransient<Func<ReportingDeployViewModel>>(sp => () => sp.GetRequiredService<ReportingDeployViewModel>());
+
+        services.AddTransient<Func<string, IJobMonitorService>>(_ => connStr => new JobMonitorService(connStr));
+        services.AddTransient<MonitoringDocumentViewModel>(sp =>
+        {
+            var factory = sp.GetRequiredService<ISqlConnectionFactory>();
+            var settings = sp.GetRequiredService<ISettingsService>();
+            var profile = settings.LoadProfiles().FirstOrDefault();
+            var connStr = profile != null ? factory.Create(profile).ConnectionString : "";
+            return new MonitoringDocumentViewModel(sp.GetRequiredService<Func<string, IJobMonitorService>>(), connStr);
+        });
+        services.AddTransient<Func<MonitoringDocumentViewModel>>(sp => () => sp.GetRequiredService<MonitoringDocumentViewModel>());
+
         services.AddSingleton<ConnectionSwitchDocumentViewModel>();
 
         services.AddTransient<MainWindowViewModel>();

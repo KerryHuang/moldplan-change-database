@@ -1,3 +1,4 @@
+using System.Threading;
 using Xunit;
 using NSubstitute;
 using MoldplanDbSwitcher.Models;
@@ -72,10 +73,19 @@ public class MainWindowViewModelTests
         return new ReportingDeployViewModel(_ => deploy, "", "");
     }
 
+    private MonitoringDocumentViewModel CreateMonitor()
+    {
+        var monitor = Substitute.For<IJobMonitorService>();
+        monitor.ListJobsAsync(Arg.Any<CancellationToken>()).Returns(new List<AgentJobStatus>());
+        monitor.GetRefreshLogAsync(Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(new List<RefreshLogEntry>());
+        return new MonitoringDocumentViewModel(_ => monitor, "");
+    }
+
     private MainWindowViewModel CreateVm() => new(
         CreateConnectionSwitch(),
         CreateQuery,
         CreateDeploy,
+        CreateMonitor,
         _activeConnection,
         _updateCheckService,
         _appSettingsService);
@@ -178,6 +188,16 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
+    public void OpenReportingMonitor_AddsDocument_AndActivates_Singleton()
+    {
+        var vm = CreateVm();
+        vm.OpenReportingMonitorCommand.Execute(null);
+        vm.OpenReportingMonitorCommand.Execute(null);
+        Assert.Equal(1, vm.Documents.Count(d => d.DocumentType == "ReportingMonitor"));
+        Assert.Equal("ReportingMonitor", vm.SelectedDocument!.DocumentType);
+    }
+
+    [Fact]
     public void ActiveConnectionChanged_PropagatesToOpenDocuments()
     {
         // 記錄 objectsFactory 被呼叫時收到的 connectionString
@@ -202,6 +222,7 @@ public class MainWindowViewModelTests
             CreateConnectionSwitch(),
             queryFactory,
             CreateDeploy,
+            CreateMonitor,
             active,
             _updateCheckService,
             _appSettingsService);
