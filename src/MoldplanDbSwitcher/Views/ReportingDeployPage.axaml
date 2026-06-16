@@ -32,9 +32,9 @@
         <Button Content="部署全部 (01→07)" Command="{Binding DeployAllCommand}"
                 IsEnabled="{Binding CanDeployAll}"
                 ToolTip.Tip="{Binding IsFullyDeployed, Converter={x:Static BoolConverters.Not}, ConverterParameter=已完整部署，無需再執行}" />
-        <Button Content="部署 Daily Job (05)" Command="{Binding DeployDailyJobCommand}"
+        <Button Content="部署 Daily Job (06)" Command="{Binding DeployDailyJobCommand}"
                 IsEnabled="{Binding !IsBusy}" />
-        <Button Content="部署 Hourly Job (06)" Command="{Binding DeployHourlyJobCommand}"
+        <Button Content="部署 Hourly Job (07)" Command="{Binding DeployHourlyJobCommand}"
                 IsEnabled="{Binding !IsBusy}" />
         <Button Content="匯出 SQL" Click="OnExportSqlClick" IsEnabled="{Binding !IsBusy}" />
         <Button Content="⚠ 移除全部 (98)" Background="Crimson" Foreground="White"
