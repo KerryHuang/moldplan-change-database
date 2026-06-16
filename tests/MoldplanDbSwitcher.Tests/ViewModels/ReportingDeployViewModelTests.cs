@@ -118,6 +118,15 @@ public class ReportingDeployViewModelTests
     }
 
     [Fact]
+    public void DocumentType_And_Title_AreSet()
+    {
+        var vm = CreateSut();
+        Assert.Equal("ReportingDeploy", vm.DocumentType);
+        Assert.Equal("Reporting 部署", vm.Title);
+        Assert.True(vm.CanClose);
+    }
+
+    [Fact]
     public async Task CanDropAll_NothingDeployed_ReturnsFalse()
     {
         var objects = Substitute.For<IReportingObjectService>();

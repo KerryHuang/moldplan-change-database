@@ -3,10 +3,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.Services;
+using MoldplanDbSwitcher.ViewModels.Documents;
 
 namespace MoldplanDbSwitcher.ViewModels;
 
-public partial class ReportingDeployViewModel : ObservableObject
+public partial class ReportingDeployViewModel : DocumentViewModel
 {
     private readonly Func<string, IReportingObjectService> _objectsFactory;
     private readonly Func<string, IReportingDeployService> _deployFactory;
@@ -25,7 +26,13 @@ public partial class ReportingDeployViewModel : ObservableObject
         _deploy = deployFactory(initialConnectionString);
         _targetDatabaseName = initialDatabaseName;
         _jobOwner = "sa";
+        Title = "Reporting 部署";
     }
+
+    public override string DocumentType => "ReportingDeploy";
+
+    public override Task UseConnectionAsync(ActiveConnection connection)
+        => UseConnectionAsync(connection.ConnectionString, connection.Database);
 
     public ObservableCollection<DeployStep> Steps { get; } = new();
 
