@@ -105,7 +105,8 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         IsBusy = true;
         try
         {
-            var progress = new Progress<DeployStep>(s =>
+            // SynchronousProgress：直接在呼叫執行緒觸發回呼，確保測試環境下步驟即時更新
+            var progress = new SynchronousProgress<DeployStep>(s =>
             {
                 // 以 FileName 為鍵：已存在則就地更新（Running → Success/Failed），否則新增
                 var idx = -1;
@@ -165,5 +166,11 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         if (SaveExportSqlCallback is null) return;
         var sql = _deploy.GenerateExportSql(BuildParameters());
         await SaveExportSqlCallback(sql);
+    }
+
+    /// <summary>同步觸發回呼的 IProgress 實作，避免 Progress&lt;T&gt; 在測試環境延遲執行。</summary>
+    private sealed class SynchronousProgress<T>(Action<T> handler) : IProgress<T>
+    {
+        public void Report(T value) => handler(value);
     }
 }
