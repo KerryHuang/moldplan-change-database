@@ -126,4 +126,51 @@ public class MainWindowViewModelTests
         home.CloseCommand.Execute(null);
         Assert.Contains(vm.Documents, d => d.DocumentType == "ConnectionSwitch");
     }
+
+    // ── 更新橫幅測試 ────────────────────────────────────────────────────
+
+    private static async Task WaitForUpdateCheckAsync(MainWindowViewModel vm)
+    {
+        for (var i = 0; i < 50; i++)
+        {
+            if (vm.UpdateAvailable || vm.UpdateBannerText.Length > 0) return;
+            await Task.Delay(20);
+        }
+    }
+
+    [Fact]
+    public async Task Ctor_UpdateAvailable_SetsBannerProperties()
+    {
+        _updateCheckService.CheckAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new UpdateInfo("9.9.9", "https://x/release", "notes"));
+
+        var vm = CreateVm();
+        await WaitForUpdateCheckAsync(vm);
+
+        Assert.True(vm.UpdateAvailable);
+        Assert.Equal("https://x/release", vm.UpdateReleaseUrl);
+        Assert.Contains("9.9.9", vm.UpdateBannerText);
+    }
+
+    [Fact]
+    public async Task Ctor_NoUpdate_BannerHidden()
+    {
+        // Default fixture returns null
+        var vm = CreateVm();
+        await Task.Delay(100); // let fire-and-forget settle
+        Assert.False(vm.UpdateAvailable);
+    }
+
+    [Fact]
+    public async Task DismissUpdateCommand_HidesBanner()
+    {
+        _updateCheckService.CheckAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new UpdateInfo("9.9.9", "https://x", ""));
+        var vm = CreateVm();
+        await WaitForUpdateCheckAsync(vm);
+
+        vm.DismissUpdateCommand.Execute(null);
+
+        Assert.False(vm.UpdateAvailable);
+    }
 }
