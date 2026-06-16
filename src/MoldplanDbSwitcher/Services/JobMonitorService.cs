@@ -29,8 +29,13 @@ SELECT j.name AS JobName,
        js.last_run_duration AS LastDuration,
        sch.next_run_date AS NextRunDate,
        sch.next_run_time AS NextRunTime
+-- OUTER APPLY 確保多目標伺服器（MSX）環境下每個 Job 僅回傳一筆
 FROM msdb.dbo.sysjobs j
-LEFT JOIN msdb.dbo.sysjobservers js ON js.job_id = j.job_id
+OUTER APPLY (
+    SELECT TOP 1 jsv.last_run_date, jsv.last_run_time, jsv.last_run_outcome, jsv.last_run_duration
+    FROM msdb.dbo.sysjobservers jsv
+    WHERE jsv.job_id = j.job_id
+) js
 OUTER APPLY (
     SELECT TOP 1 jsc.next_run_date, jsc.next_run_time
     FROM msdb.dbo.sysjobschedules jsc
@@ -87,7 +92,11 @@ ORDER BY j.name;";
             throw new InvalidOperationException($"不允許觸發非 Reporting 刷新 Job：{jobName}");
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync(ct);
-        await using var cmd = new SqlCommand("msdb.dbo.sp_start_job", conn) { CommandType = System.Data.CommandType.StoredProcedure };
+        await using var cmd = new SqlCommand("msdb.dbo.sp_start_job", conn)
+        {
+            CommandType = System.Data.CommandType.StoredProcedure,
+            CommandTimeout = 10
+        };
         cmd.Parameters.AddWithValue("@job_name", jobName);
         await cmd.ExecuteNonQueryAsync(ct);
     }
