@@ -17,21 +17,32 @@
       </StackPanel>
     </Border>
 
-    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
-      <Button Content="部署全部 (01→04)" Command="{Binding DeployAllCommand}"
-              IsEnabled="{Binding CanDeployAll}"
-              ToolTip.Tip="{Binding IsFullyDeployed, Converter={x:Static BoolConverters.Not}, ConverterParameter=已完整部署，無需再執行}" />
-      <Button Content="部署 Daily Job (05)" Command="{Binding DeployDailyJobCommand}"
-              IsEnabled="{Binding !IsBusy}" />
-      <Button Content="部署 Hourly Job (06)" Command="{Binding DeployHourlyJobCommand}"
-              IsEnabled="{Binding !IsBusy}" />
-      <TextBlock Text="Job Owner:" VerticalAlignment="Center" Margin="16,0,0,0" />
-      <TextBox Text="{Binding JobOwner}" Width="120" />
-      <Button Content="⚠ 移除全部 (98)" Background="Crimson" Foreground="White"
-              IsEnabled="{Binding CanDropAll}"
-              Click="OnDropAllClick" />
-      <TextBlock Text="✓ 已完整部署" Foreground="LimeGreen" VerticalAlignment="Center"
-                 IsVisible="{Binding IsFullyDeployed}" />
+    <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,8">
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="目標報表庫：" VerticalAlignment="Center" />
+        <TextBox Text="{Binding TargetDatabaseName}" Width="200" />
+        <TextBlock Text="來源主庫：" VerticalAlignment="Center" />
+        <TextBox Text="{Binding SourceDatabaseName}" Width="200" />
+        <TextBlock Text="Job Owner：" VerticalAlignment="Center" />
+        <TextBox Text="{Binding JobOwner}" Width="100" />
+      </StackPanel>
+      <TextBlock Text="⚠ 報表庫須與來源主庫位於同一個 SQL Server instance（View 以三段式跨庫參照）。"
+                 Foreground="Orange" TextWrapping="Wrap" Margin="0,4,0,0" />
+      <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+        <Button Content="部署全部 (01→07)" Command="{Binding DeployAllCommand}"
+                IsEnabled="{Binding CanDeployAll}"
+                ToolTip.Tip="{Binding IsFullyDeployed, Converter={x:Static BoolConverters.Not}, ConverterParameter=已完整部署，無需再執行}" />
+        <Button Content="部署 Daily Job (05)" Command="{Binding DeployDailyJobCommand}"
+                IsEnabled="{Binding !IsBusy}" />
+        <Button Content="部署 Hourly Job (06)" Command="{Binding DeployHourlyJobCommand}"
+                IsEnabled="{Binding !IsBusy}" />
+        <Button Content="匯出 SQL" Click="OnExportSqlClick" IsEnabled="{Binding !IsBusy}" />
+        <Button Content="⚠ 移除全部 (98)" Background="Crimson" Foreground="White"
+                IsEnabled="{Binding CanDropAll}"
+                Click="OnDropAllClick" />
+        <TextBlock Text="✓ 已完整部署" Foreground="LimeGreen" VerticalAlignment="Center"
+                   IsVisible="{Binding IsFullyDeployed}" />
+      </StackPanel>
     </StackPanel>
 
     <DataGrid ItemsSource="{Binding Steps}" IsReadOnly="True" AutoGenerateColumns="True" />
