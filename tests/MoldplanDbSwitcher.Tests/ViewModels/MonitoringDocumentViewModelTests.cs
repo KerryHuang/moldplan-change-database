@@ -65,4 +65,17 @@ public class MonitoringDocumentViewModelTests
 
         await monitor.Received().TriggerJobAsync("Reporting_DailyRefresh_MoldPlan", Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task TriggerHourlyJob_CallsServiceWithHourlyJobName()
+    {
+        var monitor = Substitute.For<IJobMonitorService>();
+        monitor.ListJobsAsync(Arg.Any<CancellationToken>()).Returns(new List<AgentJobStatus>());
+        monitor.GetRefreshLogAsync(Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(new List<RefreshLogEntry>());
+        var vm = Create(monitor);
+
+        await vm.TriggerHourlyJobCommand.ExecuteAsync(null);
+
+        await monitor.Received().TriggerJobAsync("Reporting_HourlyRefresh_MoldPlan", Arg.Any<CancellationToken>());
+    }
 }
