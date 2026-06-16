@@ -37,8 +37,11 @@ class Program
         services.AddSingleton<IAppSettingsDevService, AppSettingsDevService>();
         services.AddSingleton<IActiveConnectionService, ActiveConnectionService>();
 
-        services.AddSingleton<IReportingScriptProvider>(sp =>
-            new ReportingScriptProvider(sp.GetRequiredService<IAppSettingsService>().GetMoldPlanScriptsPath()));
+        services.AddSingleton<IReportingScriptProvider>(_ =>
+            // 內嵌腳本為唯一來源（雙佔位符 <<Database>>/<<MAINDB>>）。
+            // 如需外部覆寫，未來以專屬設定（ReportingScriptsOverridePath）注入，
+            // 避免舊版 <<CHANGE_ME>> 腳本被誤用。
+            new ReportingScriptProvider(externalOverrideDir: null));
         services.AddSingleton<ISqlBatchExecutor, SqlBatchExecutor>();
 
         services.AddTransient<Func<string, IReportingObjectService>>(_ => connStr => new ReportingObjectService(connStr));
