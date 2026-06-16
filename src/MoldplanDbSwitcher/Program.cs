@@ -67,7 +67,6 @@ class Program
             var profile = settings.LoadProfiles().FirstOrDefault();
             var connStr = profile != null ? factory.Create(profile).ConnectionString : "";
             return new ReportingDeployViewModel(
-                sp.GetRequiredService<Func<string, IReportingObjectService>>(),
                 sp.GetRequiredService<Func<string, IReportingDeployService>>(),
                 connStr,
                 profile?.Database ?? "");

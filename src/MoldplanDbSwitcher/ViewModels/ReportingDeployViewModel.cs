@@ -9,23 +9,18 @@ namespace MoldplanDbSwitcher.ViewModels;
 
 public partial class ReportingDeployViewModel : DocumentViewModel
 {
-    private readonly Func<string, IReportingObjectService> _objectsFactory;
     private readonly Func<string, IReportingDeployService> _deployFactory;
-    private IReportingObjectService _objects;
     private IReportingDeployService _deploy;
 
     public ReportingDeployViewModel(
-        Func<string, IReportingObjectService> objectsFactory,
         Func<string, IReportingDeployService> deployFactory,
         string initialConnectionString,
         string initialDatabaseName)
     {
-        _objectsFactory = objectsFactory;
         _deployFactory = deployFactory;
-        _objects = objectsFactory(initialConnectionString);
         _deploy = deployFactory(initialConnectionString);
-        _targetDatabaseName = initialDatabaseName;
-        _sourceDatabaseName = string.Empty;
+        _sourceDatabaseName = initialDatabaseName;
+        _targetDatabaseName = "MoldPlan-Reporting";
         _jobOwner = "sa";
         Title = "Reporting 部署";
     }
@@ -46,6 +41,9 @@ public partial class ReportingDeployViewModel : DocumentViewModel
     [ObservableProperty] private int _procedureCount;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string? _errorMessage;
+
+    /// <summary>檔案儲存對話框回呼，參數為 SQL 內容，回傳儲存路徑（取消時為 null）。</summary>
+    public Func<string, Task<string?>>? SaveExportSqlCallback { get; set; }
 
     public const int ExpectedTableCount = 14;
     public const int ExpectedViewCount = 13;
@@ -74,9 +72,9 @@ public partial class ReportingDeployViewModel : DocumentViewModel
 
     public async Task UseConnectionAsync(string connectionString, string databaseName)
     {
-        _objects = _objectsFactory(connectionString);
         _deploy = _deployFactory(connectionString);
-        TargetDatabaseName = databaseName;
+        SourceDatabaseName = databaseName;
+        if (string.IsNullOrWhiteSpace(TargetDatabaseName)) TargetDatabaseName = "MoldPlan-Reporting";
         await ScanEnvironmentAsync();
     }
 
@@ -87,10 +85,11 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         {
             IsBusy = true;
             ErrorMessage = null;
-            SchemaExists = await _objects.SchemaExistsAsync();
-            TableCount = (await _objects.ListTablesAsync()).Count;
-            ViewCount = (await _objects.ListViewsAsync()).Count;
-            ProcedureCount = (await _objects.ListProceduresAsync()).Count;
+            var st = await _deploy.ScanInstallStatusAsync();
+            SchemaExists = st.SchemaExists;
+            TableCount = st.TableCount;
+            ViewCount = st.ViewCount;
+            ProcedureCount = st.ProcedureCount;
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
         finally { IsBusy = false; }
@@ -106,15 +105,22 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         IsBusy = true;
         try
         {
-            var progress = new Progress<DeployStep>(step =>
+            var progress = new Progress<DeployStep>(s =>
             {
-                // 只在最終狀態（非 Running）才加入清單，或以最新狀態更新
+                // 以 FileName 為鍵：已存在則就地更新（Running → Success/Failed），否則新增
+                var idx = -1;
+                for (int i = 0; i < Steps.Count; i++)
+                    if (Steps[i].FileName == s.FileName) { idx = i; break; }
+                if (idx >= 0) Steps[idx] = s; else Steps.Add(s);
             });
-            var steps = await _deploy.DeployAllAsync(BuildParameters(), progress);
-            foreach (var step in steps)
-                Steps.Add(step);
+            await _deploy.DeployAllAsync(BuildParameters(), progress);
         }
-        finally { IsBusy = false; }
+        catch (Exception ex) { ErrorMessage = ex.Message; }
+        finally
+        {
+            IsBusy = false;
+            await ScanEnvironmentAsync();
+        }
     }
 
     [RelayCommand]
@@ -151,5 +157,13 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
         finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task ExportSqlAsync()
+    {
+        if (SaveExportSqlCallback is null) return;
+        var sql = _deploy.GenerateExportSql(BuildParameters());
+        await SaveExportSqlCallback(sql);
     }
 }

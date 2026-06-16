@@ -64,10 +64,13 @@ public class MainWindowViewModelTests
         _ => Substitute.For<IReportingQueryService>(),
         "");
 
-    private ReportingDeployViewModel CreateDeploy() => new(
-        _ => Substitute.For<IReportingObjectService>(),
-        _ => Substitute.For<IReportingDeployService>(),
-        "", "");
+    private ReportingDeployViewModel CreateDeploy()
+    {
+        var deploy = Substitute.For<IReportingDeployService>();
+        deploy.ScanInstallStatusAsync(Arg.Any<CancellationToken>())
+            .Returns(new ReportingInstallStatus(false, false, 0, 0, 0));
+        return new ReportingDeployViewModel(_ => deploy, "", "");
+    }
 
     private MainWindowViewModel CreateVm() => new(
         CreateConnectionSwitch(),
