@@ -44,7 +44,7 @@ public class ReportingQueryViewModelTests
     public async Task QueryAsync_PopulatesGrid()
     {
         var (_, query, vm) = Create();
-        query.QueryTopNAsync("T1", 100, Arg.Any<IEnumerable<QueryFilterRow>>(), Arg.Any<IEnumerable<QuerySortRow>>(), Arg.Any<CancellationToken>())
+        query.QueryTopNAsync("T1", 100, Arg.Any<IEnumerable<QueryFilterRow>>(), Arg.Any<IEnumerable<QuerySortRow>>(), Arg.Any<IEnumerable<string>?>(), Arg.Any<CancellationToken>())
             .Returns(new QueryResult(new[] { "Id", "Name" },
                 new List<IReadOnlyList<object?>> { new object?[] { 1, "a" } }));
         vm.SelectedObject = new ReportingObject("Reporting", "T1", ReportingObjectKind.BaseTable, null);

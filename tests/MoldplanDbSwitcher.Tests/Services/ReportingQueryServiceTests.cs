@@ -169,4 +169,60 @@ public class ReportingQueryServiceTests : IClassFixture<LocalDbFixture>
         Assert.Equal(1, result.Rows[1][0]); // Id=1 second
         Assert.Equal(2, result.Rows[2][0]); // Id=2 last (Name='b')
     }
+
+    [Fact]
+    public async Task QueryTopN_WithColumns_ProjectsSelectedColumns()
+    {
+        await SeedAsync(@"
+            IF SCHEMA_ID('Reporting') IS NULL EXEC('CREATE SCHEMA Reporting');
+            IF OBJECT_ID('Reporting.QT7') IS NOT NULL DROP TABLE Reporting.QT7;
+            CREATE TABLE Reporting.QT7 (Id INT, Name NVARCHAR(50));
+            INSERT INTO Reporting.QT7 VALUES (1,'x'),(2,'y');
+        ");
+        var sut = new ReportingQueryService(_db.ConnectionString);
+
+        var result = await sut.QueryTopNAsync(
+            "QT7", 100,
+            Array.Empty<QueryFilterRow>(),
+            Array.Empty<QuerySortRow>(),
+            columns: new[] { "Id", "Name" });
+
+        Assert.Contains("[Id]", result.ExecutedSql);
+        Assert.Contains("[Name]", result.ExecutedSql);
+        Assert.DoesNotContain("TOP (100) *", result.ExecutedSql);
+        Assert.Equal(2, result.Columns.Count);
+        Assert.Equal(2, result.Rows.Count);
+    }
+
+    [Fact]
+    public async Task QueryTopN_EmptyColumns_SelectsStar()
+    {
+        await SeedAsync(@"
+            IF SCHEMA_ID('Reporting') IS NULL EXEC('CREATE SCHEMA Reporting');
+            IF OBJECT_ID('Reporting.QT7') IS NOT NULL DROP TABLE Reporting.QT7;
+            CREATE TABLE Reporting.QT7 (Id INT, Name NVARCHAR(50));
+            INSERT INTO Reporting.QT7 VALUES (1,'x');
+        ");
+        var sut = new ReportingQueryService(_db.ConnectionString);
+
+        var result = await sut.QueryTopNAsync(
+            "QT7", 100,
+            Array.Empty<QueryFilterRow>(),
+            Array.Empty<QuerySortRow>(),
+            columns: Array.Empty<string>());
+
+        Assert.Contains("*", result.ExecutedSql);
+    }
+
+    [Fact]
+    public async Task QueryTopN_InvalidColumnName_Throws()
+    {
+        var sut = new ReportingQueryService(_db.ConnectionString);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            sut.QueryTopNAsync("QT7", 100,
+                Array.Empty<QueryFilterRow>(),
+                Array.Empty<QuerySortRow>(),
+                columns: new[] { "x; DROP TABLE y" }));
+    }
 }

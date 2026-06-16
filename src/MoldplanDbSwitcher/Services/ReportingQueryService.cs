@@ -60,7 +60,8 @@ public class ReportingQueryService : IReportingQueryService
     }
 
     public async Task<QueryResult> QueryTopNAsync(string objectName, int top,
-        IEnumerable<QueryFilterRow> filters, IEnumerable<QuerySortRow> sorts, CancellationToken ct = default)
+        IEnumerable<QueryFilterRow> filters, IEnumerable<QuerySortRow> sorts,
+        IEnumerable<string>? columns = null, CancellationToken ct = default)
     {
         EnsureValidIdentifier(objectName);
         if (top <= 0 || top > MaxTopN)
@@ -70,11 +71,21 @@ public class ReportingQueryService : IReportingQueryService
         var whereClause = BuildWhereClauseWithConnectors(filters, parameters);
         var orderByClause = BuildOrderByClause(sorts);
 
-        var sql = $"SELECT TOP ({top}) * FROM [Reporting].[{objectName}]";
+        var selectList = BuildSelectList(columns);
+        var sql = $"SELECT TOP ({top}) {selectList} FROM [Reporting].[{objectName}]";
         if (!string.IsNullOrEmpty(whereClause)) sql += " WHERE " + whereClause;
         if (!string.IsNullOrEmpty(orderByClause)) sql += " ORDER BY " + orderByClause;
 
         return await ExecuteQueryAsync(sql, parameters, ct);
+    }
+
+    private static string BuildSelectList(IEnumerable<string>? columns)
+    {
+        if (columns == null) return "*";
+        var cols = columns.Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
+        if (cols.Count == 0) return "*";
+        foreach (var c in cols) EnsureValidIdentifier(c);
+        return string.Join(", ", cols.Select(c => $"[{c}]"));
     }
 
     private static string BuildFilterCondition(QueryFilterRow f, List<(string name, object? value)> parameters, ref int paramIdx)
