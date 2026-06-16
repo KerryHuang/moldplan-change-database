@@ -45,7 +45,9 @@ public class ReportingDeployService : IReportingDeployService
         IProgress<DeployStep>? progress, CancellationToken ct)
     {
         var script = _scripts.GetScript(fileNumber);
-        var sql = dbName != null ? _scripts.RenderJobScript(fileNumber, dbName, jobOwner ?? "sa") : script.Content;
+        var sql = dbName != null
+            ? _scripts.Render(fileNumber, new Models.ReportingDeployParameters(dbName, dbName, jobOwner ?? "sa"))
+            : script.Content;
         var step = new DeployStep(script.FileName, $"執行 {script.FileName}", DeployStatus.Running, null);
         progress?.Report(step);
 

@@ -1,77 +1,64 @@
-using System;
-using System.IO;
-using System.Linq;
+using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.Services;
 using Xunit;
 
 namespace MoldplanDbSwitcher.Tests.Services;
 
-public class ReportingScriptProviderTests : IDisposable
+public class ReportingScriptProviderTests
 {
-    private readonly string _tempDir;
+    private static ReportingScriptProvider Embedded() => new(externalOverrideDir: null);
 
-    public ReportingScriptProviderTests()
+    [Fact]
+    public void GetScript_Embedded_ReturnsContentByFileNumber()
     {
-        _tempDir = Path.Combine(Path.GetTempPath(), "rsp_" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(_tempDir);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, true);
+        var s = Embedded().GetScript(2);
+        Assert.Equal(2, s.FileNumber);
+        Assert.Contains("Reporting", s.Content);
     }
 
     [Fact]
-    public void GetScript_ExistingFile_ReturnsContent()
+    public void Render_ReplacesBothPlaceholders()
     {
-        File.WriteAllText(Path.Combine(_tempDir, "01_Reporting_Create_Schema.sql"), "CREATE SCHEMA Reporting;");
-        var sut = new ReportingScriptProvider(_tempDir);
-
-        var script = sut.GetScript(1);
-
-        Assert.Equal(1, script.FileNumber);
-        Assert.Equal("01_Reporting_Create_Schema.sql", script.FileName);
-        Assert.Contains("CREATE SCHEMA Reporting", script.Content);
+        var sql = Embedded().Render(4, new ReportingDeployParameters("MoldPlan-Reporting", "gma-staging"));
+        Assert.DoesNotContain("<<Database>>", sql);
+        Assert.DoesNotContain("<<MAINDB>>", sql);
+        Assert.Contains("gma-staging", sql);
     }
 
     [Fact]
-    public void RenderJobScript_ReplacesChangeMePlaceholder()
+    public void Render_JobScript_SubstitutesDatabaseAndOwner()
     {
-        File.WriteAllText(Path.Combine(_tempDir, "05_Reporting_DailyRefresh_Job.sql"),
-            "DECLARE @DatabaseName NVARCHAR(128) = N'<<CHANGE_ME>>';");
-        var sut = new ReportingScriptProvider(_tempDir);
-
-        var rendered = sut.RenderJobScript(5, "MoldPlan", "sa");
-
-        Assert.Contains("N'MoldPlan'", rendered);
-        Assert.DoesNotContain("<<CHANGE_ME>>", rendered);
+        var sql = Embedded().Render(6, new ReportingDeployParameters("MoldPlan-Reporting", "gma-staging", JobOwner: "deployer"));
+        Assert.DoesNotContain("<<Database>>", sql);
+        Assert.Contains("MoldPlan-Reporting", sql);
+        Assert.Contains("N'deployer'", sql);
     }
 
     [Fact]
-    public void RenderJobScript_EmptyDatabaseName_Throws()
+    public void Render_EmptyTarget_Throws()
     {
-        var sut = new ReportingScriptProvider(_tempDir);
-        Assert.Throws<ArgumentException>(() => sut.RenderJobScript(5, "", "sa"));
+        Assert.Throws<System.ArgumentException>(() =>
+            Embedded().Render(2, new ReportingDeployParameters("", "main")));
     }
 
     [Fact]
-    public void GetScript_MissingFile_Throws()
+    public void ExternalOverride_WhenFileExists_PrefersExternalContent()
     {
-        var sut = new ReportingScriptProvider(_tempDir);
-        Assert.Throws<FileNotFoundException>(() => sut.GetScript(1));
+        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+        System.IO.Directory.CreateDirectory(dir);
+        try
+        {
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "02_Override.sql"), "USE [<<Database>>]; -- EXTERNAL");
+            var sql = new ReportingScriptProvider(externalOverrideDir: dir)
+                .Render(2, new ReportingDeployParameters("DB", "main"));
+            Assert.Contains("EXTERNAL", sql);
+        }
+        finally { System.IO.Directory.Delete(dir, true); }
     }
 
     [Fact]
-    public void ListAvailable_ReturnsAllNumbered()
+    public void ListAvailable_Embedded_ReturnsNineScripts()
     {
-        File.WriteAllText(Path.Combine(_tempDir, "01_a.sql"), "a");
-        File.WriteAllText(Path.Combine(_tempDir, "02_b.sql"), "b");
-        File.WriteAllText(Path.Combine(_tempDir, "README.md"), "skip");
-        var sut = new ReportingScriptProvider(_tempDir);
-
-        var list = sut.ListAvailable();
-
-        Assert.Equal(2, list.Count);
-        Assert.Equal(new[] { 1, 2 }, list.Select(s => s.FileNumber));
+        Assert.Equal(9, Embedded().ListAvailable().Count);
     }
 }
