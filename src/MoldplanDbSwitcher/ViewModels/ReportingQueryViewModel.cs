@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.Services;
+using MoldplanDbSwitcher.ViewModels.Documents;
 
 namespace MoldplanDbSwitcher.ViewModels;
 
@@ -13,8 +14,12 @@ public partial class ReportingObjectGroup : ObservableObject
     public ReportingObjectGroup(string header) { Header = header; }
 }
 
-public partial class ReportingQueryViewModel : ObservableObject
+public partial class ReportingQueryViewModel : DocumentViewModel
 {
+    public override string DocumentType => "ReportingQuery";
+
+    public override Task UseConnectionAsync(ActiveConnection connection)
+        => UseConnectionAsync(connection.ConnectionString);
     private readonly Func<string, IReportingObjectService> _objectsFactory;
     private readonly Func<string, IReportingQueryService> _queryFactory;
     private IReportingObjectService _objects;
@@ -29,6 +34,7 @@ public partial class ReportingQueryViewModel : ObservableObject
         _queryFactory = queryFactory;
         _objects = objectsFactory(initialConnectionString);
         _query = queryFactory(initialConnectionString);
+        Title = "Reporting 查詢";
     }
 
     public ObservableCollection<ReportingObject> Objects { get; } = new();

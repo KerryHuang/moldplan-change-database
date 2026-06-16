@@ -57,6 +57,15 @@ public class ReportingQueryViewModelTests
     }
 
     [Fact]
+    public void DocumentType_And_Title_AreSet()
+    {
+        var (_, _, vm) = Create();
+        Assert.Equal("ReportingQuery", vm.DocumentType);
+        Assert.Equal("Reporting 查詢", vm.Title);
+        Assert.True(vm.CanClose);
+    }
+
+    [Fact]
     public async Task UseConnectionAsync_SwapsServicesAndReloads()
     {
         var calls = new List<string>();
