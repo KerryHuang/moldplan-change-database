@@ -19,21 +19,20 @@ public class ReportingDeployService : IReportingDeployService
         _executor = executor;
     }
 
+    /// <summary>依序執行全部部署腳本（01–07），首錯即停。</summary>
+    /// <remarks>
+    /// 註：本方法的逐檔序列與「首錯即停」邏輯未做單元測試——服務內部自行開啟 SqlConnection，
+    /// 且 04/05 腳本以三段式跨庫參照來源主庫（LocalDB 無該庫），完整整合測試不可行。
+    /// 邏輯為固定序列的 guarded foreach，風險低；VM 層測試涵蓋失敗步驟的呈現。
+    /// </remarks>
     public async Task<IReadOnlyList<DeployStep>> DeployAllAsync(
         ReportingDeployParameters parameters,
         IProgress<DeployStep>? progress = null,
         CancellationToken ct = default)
     {
-        // 以 master 連線建立資料庫（01 CREATE DATABASE 需在 master context 執行）
-        var masterCs = new SqlConnectionStringBuilder(_connectionString)
-        {
-            InitialCatalog = "master"
-        }.ConnectionString;
-
         var results = new List<DeployStep>();
 
-        await using var conn = new SqlConnection(masterCs);
-        await conn.OpenAsync(ct);
+        await using var conn = await OpenMasterConnectionAsync(ct);
 
         foreach (var fileNumber in DeploySequence)
         {
@@ -65,18 +64,12 @@ public class ReportingDeployService : IReportingDeployService
         IProgress<DeployStep>? progress = null,
         CancellationToken ct = default)
     {
-        var masterCs = new SqlConnectionStringBuilder(_connectionString)
-        {
-            InitialCatalog = "master"
-        }.ConnectionString;
-
         var script = _scripts.GetScript(fileNumber);
         var step = new DeployStep(script.FileName, $"執行 {script.FileName}", DeployStatus.Running, null);
         progress?.Report(step);
 
         var sql = _scripts.Render(fileNumber, parameters);
-        await using var conn = new SqlConnection(masterCs);
-        await conn.OpenAsync(ct);
+        await using var conn = await OpenMasterConnectionAsync(ct);
 
         var batches = await _executor.ExecuteAsync(conn, sql, null, ct);
         var failed = batches.FirstOrDefault(r => !r.Success);
@@ -98,18 +91,12 @@ public class ReportingDeployService : IReportingDeployService
             throw new InvalidOperationException(
                 $"確認名稱「{confirmDatabaseName}」與目標資料庫「{parameters.TargetDatabase}」不符，已中止");
 
-        var masterCs = new SqlConnectionStringBuilder(_connectionString)
-        {
-            InitialCatalog = "master"
-        }.ConnectionString;
-
         var script = _scripts.GetScript(98);
         var step = new DeployStep(script.FileName, $"執行 {script.FileName}", DeployStatus.Running, null);
         progress?.Report(step);
 
         var sql = _scripts.Render(98, parameters);
-        await using var conn = new SqlConnection(masterCs);
-        await conn.OpenAsync(ct);
+        await using var conn = await OpenMasterConnectionAsync(ct);
 
         var batches = await _executor.ExecuteAsync(conn, sql, null, ct);
         var failed = batches.FirstOrDefault(r => !r.Success);
@@ -127,13 +114,7 @@ public class ReportingDeployService : IReportingDeployService
         // 逸出識別符中的 ']'
         var safeDb = targetDb.Replace("]", "]]");
 
-        var masterCs = new SqlConnectionStringBuilder(_connectionString)
-        {
-            InitialCatalog = "master"
-        }.ConnectionString;
-
-        await using var conn = new SqlConnection(masterCs);
-        await conn.OpenAsync(ct);
+        await using var conn = await OpenMasterConnectionAsync(ct);
 
         // 確認目標資料庫存在
         await using var dbCmd = conn.CreateCommand();
@@ -171,6 +152,15 @@ public class ReportingDeployService : IReportingDeployService
         var procCount = (int)(await procCmd.ExecuteScalarAsync(ct))!;
 
         return new ReportingInstallStatus(true, true, tableCount, viewCount, procCount);
+    }
+
+    // 部署/掃描一律連 master：01 需在目標庫尚未存在時建庫，其餘腳本各自 USE 切換 context。
+    private async Task<SqlConnection> OpenMasterConnectionAsync(CancellationToken ct)
+    {
+        var masterCs = new SqlConnectionStringBuilder(_connectionString) { InitialCatalog = "master" }.ConnectionString;
+        var conn = new SqlConnection(masterCs);
+        await conn.OpenAsync(ct);
+        return conn;
     }
 
     public string GenerateExportSql(ReportingDeployParameters parameters, bool includeDrop = false)
