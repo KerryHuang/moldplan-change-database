@@ -75,4 +75,25 @@ public class AppSettingsServiceTests : IDisposable
         _sut.Save(new AppSettings { MoldPlanScriptsPath = @"C:\custom\path" });
         Assert.Equal(@"C:\custom\path", _sut.GetMoldPlanScriptsPath());
     }
+
+    [Fact]
+    public void Save_ReportingScriptsOverridePath_RoundTrips()
+    {
+        var settings = new AppSettings
+        {
+            ReportingScriptsOverridePath = "X:/some/dir"
+        };
+
+        _sut.Save(settings);
+        var loaded = _sut.Load();
+
+        Assert.Equal("X:/some/dir", loaded.ReportingScriptsOverridePath);
+    }
+
+    [Fact]
+    public void Load_NoFile_ReportingScriptsOverridePath_IsEmpty()
+    {
+        var settings = _sut.Load();
+        Assert.Equal(string.Empty, settings.ReportingScriptsOverridePath);
+    }
 }

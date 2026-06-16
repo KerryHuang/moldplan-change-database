@@ -53,6 +53,14 @@
       </StackPanel>
 
       <StackPanel Spacing="4">
+        <TextBlock Text="Reporting 腳本覆寫路徑（留空＝用內嵌腳本）：" />
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="瀏覽..." Click="OnBrowseReportingScriptsOverridePathClick" Margin="8,0,0,0" />
+          <TextBox x:Name="ReportingScriptsOverridePathBox" Watermark="留空則使用程式內嵌腳本" />
+        </DockPanel>
+      </StackPanel>
+
+      <StackPanel Spacing="4">
         <TextBlock Text="GitHub PAT（檢查更新用）：" />
         <TextBox x:Name="GitHubTokenBox" PasswordChar="●"
                  Watermark="留白則不檢查更新" />

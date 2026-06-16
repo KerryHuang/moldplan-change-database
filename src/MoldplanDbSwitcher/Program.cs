@@ -37,11 +37,14 @@ class Program
         services.AddSingleton<IAppSettingsDevService, AppSettingsDevService>();
         services.AddSingleton<IActiveConnectionService, ActiveConnectionService>();
 
-        services.AddSingleton<IReportingScriptProvider>(_ =>
-            // 內嵌腳本為唯一來源（雙佔位符 <<Database>>/<<MAINDB>>）。
-            // 如需外部覆寫，未來以專屬設定（ReportingScriptsOverridePath）注入，
-            // 避免舊版 <<CHANGE_ME>> 腳本被誤用。
-            new ReportingScriptProvider(externalOverrideDir: null));
+        services.AddSingleton<IReportingScriptProvider>(sp =>
+        {
+            var appSettings = sp.GetRequiredService<IAppSettingsService>().Load();
+            var overrideDir = appSettings.ReportingScriptsOverridePath;
+            // 空字串 = 使用內嵌腳本；有設值 = 外部資料夾優先覆寫
+            return new ReportingScriptProvider(
+                string.IsNullOrWhiteSpace(overrideDir) ? null : overrideDir);
+        });
         services.AddSingleton<ISqlBatchExecutor, SqlBatchExecutor>();
 
         services.AddTransient<Func<string, IReportingObjectService>>(_ => connStr => new ReportingObjectService(connStr));

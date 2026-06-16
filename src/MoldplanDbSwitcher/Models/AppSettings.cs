@@ -14,4 +14,6 @@ public class AppSettings
     public string? MoldPlanScriptsPath { get; set; }
 
     public string? GitHubToken { get; set; }
+
+    public string ReportingScriptsOverridePath { get; set; } = string.Empty;
 }

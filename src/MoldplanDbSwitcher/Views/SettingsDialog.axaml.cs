@@ -21,6 +21,7 @@ public partial class SettingsDialog : Window
         DevDirectoryBox.Text = settings.DevDirectory;
         MoldPlanScriptsPathBox.Text = settings.MoldPlanScriptsPath ?? string.Empty;
         GitHubTokenBox.Text = settings.GitHubToken ?? string.Empty;
+        ReportingScriptsOverridePathBox.Text = settings.ReportingScriptsOverridePath;
     }
 
     private void OnSaveClick(object? sender, RoutedEventArgs e)
@@ -31,7 +32,8 @@ public partial class SettingsDialog : Window
             VaultPasswordFile = VaultPasswordFileBox.Text ?? string.Empty,
             DevDirectory = DevDirectoryBox.Text ?? string.Empty,
             MoldPlanScriptsPath = string.IsNullOrWhiteSpace(MoldPlanScriptsPathBox.Text) ? null : MoldPlanScriptsPathBox.Text,
-            GitHubToken = string.IsNullOrWhiteSpace(GitHubTokenBox.Text) ? null : GitHubTokenBox.Text
+            GitHubToken = string.IsNullOrWhiteSpace(GitHubTokenBox.Text) ? null : GitHubTokenBox.Text,
+            ReportingScriptsOverridePath = ReportingScriptsOverridePathBox.Text ?? string.Empty
         });
         Close();
     }
@@ -80,5 +82,16 @@ public partial class SettingsDialog : Window
         });
         if (folders.Count > 0)
             MoldPlanScriptsPathBox.Text = folders[0].Path.LocalPath;
+    }
+
+    private async void OnBrowseReportingScriptsOverridePathClick(object? sender, RoutedEventArgs e)
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "選擇 Reporting 腳本覆寫目錄",
+            AllowMultiple = false
+        });
+        if (folders.Count > 0)
+            ReportingScriptsOverridePathBox.Text = folders[0].Path.LocalPath;
     }
 }
