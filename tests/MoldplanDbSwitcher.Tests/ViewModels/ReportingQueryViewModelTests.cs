@@ -86,4 +86,27 @@ public class ReportingQueryViewModelTests
         Assert.Contains("obj:first", calls);
         Assert.Contains("obj:second", calls);
     }
+
+    [Fact]
+    public async Task UseConnectionAsync_ActiveConnection_DelegatesToStringOverload()
+    {
+        // 驗證 ActiveConnection 多載將 ConnectionString 傳給單參數字串多載，使物件工廠以新連線字串被呼叫
+        var calls = new List<string>();
+        Func<string, IReportingObjectService> oFactory = cs =>
+        {
+            calls.Add($"obj:{cs}");
+            var s = Substitute.For<IReportingObjectService>();
+            s.ListTablesAsync(Arg.Any<CancellationToken>()).Returns(new List<ReportingObject>());
+            s.ListViewsAsync(Arg.Any<CancellationToken>()).Returns(new List<ReportingObject>());
+            s.ListProceduresAsync(Arg.Any<CancellationToken>()).Returns(new List<ReportingObject>());
+            return s;
+        };
+        Func<string, IReportingQueryService> qFactory = _ => Substitute.For<IReportingQueryService>();
+        var vm = new ReportingQueryViewModel(oFactory, qFactory, "first");
+        var connection = new ActiveConnection("Server=tcp:new;Database=Reporting", "Reporting", null);
+
+        await vm.UseConnectionAsync(connection);
+
+        Assert.Contains("obj:Server=tcp:new;Database=Reporting", calls);
+    }
 }

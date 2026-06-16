@@ -155,4 +155,16 @@ public class ReportingDeployViewModelTests
         Assert.Single(sut.Steps);
         await deploy.DidNotReceive().DeployTablesAsync(Arg.Any<IProgress<DeployStep>>(), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task UseConnectionAsync_ActiveConnection_DelegatesToStringOverload()
+    {
+        // 驗證 ActiveConnection 多載將 Database 欄位傳給兩參數的字串多載，使 TargetDatabaseName 被更新
+        var sut = CreateSut();
+        var connection = new ActiveConnection("Server=tcp:h;Database=ignored", "TargetMainDb", null);
+
+        await sut.UseConnectionAsync(connection);
+
+        Assert.Equal("TargetMainDb", sut.TargetDatabaseName);
+    }
 }
