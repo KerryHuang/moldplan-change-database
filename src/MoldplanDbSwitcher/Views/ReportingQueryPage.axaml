@@ -117,24 +117,27 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,2">
-          <TextBlock Text="顯示欄位" FontWeight="SemiBold" VerticalAlignment="Center" />
-          <Button Content="全選" Command="{Binding SelectAllColumnsCommand}"
-                  IsEnabled="{Binding ProjectionColumns.Count}" />
-          <Button Content="全不選" Command="{Binding ClearAllColumnsCommand}"
-                  IsEnabled="{Binding ProjectionColumns.Count}" />
-          <TextBlock Text="（全不選＝顯示全部）" Foreground="Gray" FontSize="11" VerticalAlignment="Center" />
-        </StackPanel>
-        <ItemsControl ItemsSource="{Binding ProjectionColumns}">
-          <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
-          <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="vm:ColumnSelectionItem">
-              <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="0,0,12,0" />
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <Expander Margin="0,8,0,2" IsExpanded="False" Header="{Binding ProjectionHeader}">
+          <StackPanel Spacing="4">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="全選" Command="{Binding SelectAllColumnsCommand}"
+                      IsEnabled="{Binding ProjectionColumns.Count}" />
+              <Button Content="全不選" Command="{Binding ClearAllColumnsCommand}"
+                      IsEnabled="{Binding ProjectionColumns.Count}" />
+              <TextBlock Text="（全不選＝顯示全部）" Foreground="Gray" FontSize="11" VerticalAlignment="Center" />
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding ProjectionColumns}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:ColumnSelectionItem">
+                  <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="0,0,12,0" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Expander>
       </StackPanel>
       <TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red" />
       <TextBlock DockPanel.Dock="Top" Text="{Binding ResultStatus}"

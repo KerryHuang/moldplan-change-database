@@ -74,11 +74,39 @@ public partial class ReportingQueryViewModel : DocumentViewModel
     [RelayCommand]
     private void RemoveSort(QuerySortRow row) => Sorts.Remove(row);
 
+    [ObservableProperty] private string _projectionHeader = "顯示欄位";
+
     [RelayCommand]
     private void SelectAllColumns() { foreach (var c in ProjectionColumns) c.IsSelected = true; }
 
     [RelayCommand]
     private void ClearAllColumns() { foreach (var c in ProjectionColumns) c.IsSelected = false; }
+
+    /// <summary>重建投影欄位清單（解除舊訂閱、依新欄位建立可勾選項並更新標頭）。</summary>
+    public void RebuildProjection(IEnumerable<ReportingColumn> columns)
+    {
+        foreach (var old in ProjectionColumns) old.PropertyChanged -= OnProjectionItemChanged;
+        ProjectionColumns.Clear();
+        foreach (var c in columns)
+        {
+            var item = new ColumnSelectionItem(c.Name, c.DataType);
+            item.PropertyChanged += OnProjectionItemChanged;
+            ProjectionColumns.Add(item);
+        }
+        UpdateProjectionHeader();
+    }
+
+    private void OnProjectionItemChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ColumnSelectionItem.IsSelected)) UpdateProjectionHeader();
+    }
+
+    private void UpdateProjectionHeader()
+    {
+        if (ProjectionColumns.Count == 0) { ProjectionHeader = "顯示欄位"; return; }
+        var selected = ProjectionColumns.Count(c => c.IsSelected);
+        ProjectionHeader = $"顯示欄位（已選 {selected}/{ProjectionColumns.Count}）";
+    }
 
     public async Task UseConnectionAsync(string connectionString)
     {
@@ -92,7 +120,7 @@ public partial class ReportingQueryViewModel : DocumentViewModel
         ResultRows.Clear();
         SelectedColumns.Clear();
         AvailableColumnNames.Clear();
-        ProjectionColumns.Clear();
+        RebuildProjection(System.Array.Empty<ReportingColumn>());
         Filters.Clear();
         Sorts.Clear();
         RefreshLog.Clear();
@@ -175,7 +203,7 @@ public partial class ReportingQueryViewModel : DocumentViewModel
     {
         SelectedColumns.Clear();
         AvailableColumnNames.Clear();
-        ProjectionColumns.Clear();
+        RebuildProjection(System.Array.Empty<ReportingColumn>());
         RefreshLog.Clear();
         if (obj == null) return;
         try
@@ -183,8 +211,7 @@ public partial class ReportingQueryViewModel : DocumentViewModel
             foreach (var c in await _objects.GetColumnsAsync(obj.Name)) SelectedColumns.Add(c);
             AvailableColumnNames.Clear();
             foreach (var c in SelectedColumns) AvailableColumnNames.Add(c.Name);
-            ProjectionColumns.Clear();
-            foreach (var c in SelectedColumns) ProjectionColumns.Add(new ColumnSelectionItem(c.Name, c.DataType));
+            RebuildProjection(SelectedColumns);
             if (obj.Kind != ReportingObjectKind.SystemTable && obj.Kind != ReportingObjectKind.Procedure)
                 foreach (var l in await _objects.GetRefreshLogAsync(obj.Name)) RefreshLog.Add(l);
         }

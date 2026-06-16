@@ -91,6 +91,25 @@ public class ReportingQueryViewModelTests
     }
 
     [Fact]
+    public void ProjectionHeader_ReflectsSelectedCount()
+    {
+        var (_, _, vm) = Create();
+        vm.RebuildProjection(new[]
+        {
+            new ReportingColumn("c1", "int", false, null),
+            new ReportingColumn("c2", "int", false, null),
+            new ReportingColumn("c3", "int", false, null),
+        });
+        Assert.Contains("3/3", vm.ProjectionHeader);
+
+        vm.ProjectionColumns[1].IsSelected = false;
+        Assert.Contains("2/3", vm.ProjectionHeader);
+
+        vm.ClearAllColumnsCommand.Execute(null);
+        Assert.Contains("0/3", vm.ProjectionHeader);
+    }
+
+    [Fact]
     public void DocumentType_And_Title_AreSet()
     {
         var (_, _, vm) = Create();
