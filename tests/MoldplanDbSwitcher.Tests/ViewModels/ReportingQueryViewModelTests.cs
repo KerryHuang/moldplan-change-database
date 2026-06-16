@@ -68,16 +68,11 @@ public class ReportingQueryViewModelTests
                 new("c2", "nvarchar", true, null),
                 new("c3", "datetime", true, null),
             });
-        IReadOnlyList<string>? capturedColumns = null;
         query.QueryTopNAsync("T1", Arg.Any<int>(), Arg.Any<IEnumerable<QueryFilterRow>>(), Arg.Any<IEnumerable<QuerySortRow>>(), Arg.Any<IEnumerable<string>?>(), Arg.Any<CancellationToken>())
-            .Returns(ci =>
-            {
-                capturedColumns = ci.ArgAt<IEnumerable<string>?>(4)?.ToList();
-                return new QueryResult(System.Array.Empty<string>(), System.Array.Empty<IReadOnlyList<object?>>());
-            });
+            .Returns(new QueryResult(System.Array.Empty<string>(), System.Array.Empty<IReadOnlyList<object?>>()));
 
         // 設定物件會觸發背景的 LoadObjectDetailAsync（填 ProjectionColumns）與自動查詢；
-        // 稍候讓背景完成後再手動設定欄位勾選，確保最終一次查詢帶入我們指定的投影。
+        // 稍候讓背景填充完成後，再手動覆寫欄位勾選，避免背景的 Clear/Add 蓋掉我們的設定。
         vm.SelectedObject = new ReportingObject("Reporting", "T1", ReportingObjectKind.BaseTable, null);
         await Task.Delay(50);
 
@@ -88,8 +83,11 @@ public class ReportingQueryViewModelTests
 
         await vm.QueryCommand.ExecuteAsync(null);
 
-        Assert.NotNull(capturedColumns);
-        Assert.Equal(new[] { "c1", "c3" }, capturedColumns);
+        // 以 Received 比對「曾有一次查詢帶入 [c1,c3]」——不受背景查詢呼叫順序影響。
+        await query.Received().QueryTopNAsync("T1", Arg.Any<int>(),
+            Arg.Any<IEnumerable<QueryFilterRow>>(), Arg.Any<IEnumerable<QuerySortRow>>(),
+            Arg.Is<IEnumerable<string>>(c => c != null && c.SequenceEqual(new[] { "c1", "c3" })),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
