@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MoldplanDbSwitcher.Services;
 using MoldplanDbSwitcher.Services.AnsibleSync;
 using MoldplanDbSwitcher.ViewModels;
+using MoldplanDbSwitcher.ViewModels.Documents;
 
 namespace MoldplanDbSwitcher;
 
@@ -34,6 +35,7 @@ class Program
         services.AddSingleton<IConnectionExportService, ConnectionExportService>();
         services.AddSingleton<IAnsibleSyncService, AnsibleSyncService>();
         services.AddSingleton<IAppSettingsDevService, AppSettingsDevService>();
+        services.AddSingleton<IActiveConnectionService, ActiveConnectionService>();
 
         services.AddSingleton<IReportingScriptProvider>(sp =>
             new ReportingScriptProvider(sp.GetRequiredService<IAppSettingsService>().GetMoldPlanScriptsPath()));
@@ -46,7 +48,7 @@ class Program
                 sp.GetRequiredService<IReportingScriptProvider>(),
                 sp.GetRequiredService<ISqlBatchExecutor>()));
 
-        services.AddSingleton<ReportingQueryViewModel>(sp =>
+        services.AddTransient<ReportingQueryViewModel>(sp =>
         {
             var factory = sp.GetRequiredService<ISqlConnectionFactory>();
             var settings = sp.GetRequiredService<ISettingsService>();
@@ -58,7 +60,7 @@ class Program
                 connStr);
         });
 
-        services.AddSingleton<ReportingDeployViewModel>(sp =>
+        services.AddTransient<ReportingDeployViewModel>(sp =>
         {
             var factory = sp.GetRequiredService<ISqlConnectionFactory>();
             var settings = sp.GetRequiredService<ISettingsService>();
@@ -70,6 +72,10 @@ class Program
                 connStr,
                 profile?.Database ?? "");
         });
+
+        services.AddTransient<Func<ReportingQueryViewModel>>(sp => () => sp.GetRequiredService<ReportingQueryViewModel>());
+        services.AddTransient<Func<ReportingDeployViewModel>>(sp => () => sp.GetRequiredService<ReportingDeployViewModel>());
+        services.AddSingleton<ConnectionSwitchDocumentViewModel>();
 
         services.AddTransient<MainWindowViewModel>();
     }

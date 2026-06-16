@@ -6,6 +6,7 @@ using Avalonia.Platform.Storage;
 using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.Services;
 using MoldplanDbSwitcher.ViewModels;
+using MoldplanDbSwitcher.ViewModels.Documents;
 
 namespace MoldplanDbSwitcher.Views;
 
@@ -16,18 +17,12 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
-    private void OnTopConnectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (sender is not ComboBox cb) return;
-        if (cb.SelectedItem is not ConnectionProfile profile) return;
-        if (DataContext is not MainWindowViewModel vm) return;
-        vm.SelectedConnection = profile;
-    }
+    private void OnExitClick(object? sender, RoutedEventArgs e) => Close();
 
-    private Func<Task<ReportSourceOptions?>> CreateReportSourceCallback(MainWindowViewModel vm) =>
+    private Func<Task<ReportSourceOptions?>> CreateReportSourceCallback(ConnectionSwitchDocumentViewModel cs) =>
         async () =>
         {
-            var dialog = new ReportSourceDialog(vm.GetAvailableSources());
+            var dialog = new ReportSourceDialog(cs.GetAvailableSources());
             return await dialog.ShowDialog<ReportSourceOptions?>(this);
         };
 
@@ -35,8 +30,9 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainWindowViewModel vm)
         {
-            vm.ReportSourceCallback = CreateReportSourceCallback(vm);
-            vm.SaveFileCallback = async () =>
+            var cs = vm.ConnectionSwitch;
+            cs.ReportSourceCallback = CreateReportSourceCallback(cs);
+            cs.SaveFileCallback = async () =>
             {
                 var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                 {
@@ -50,7 +46,7 @@ public partial class MainWindow : Window
                 });
                 return file?.Path.LocalPath;
             };
-            await vm.ExportFeatureReportCommand.ExecuteAsync(null);
+            await cs.ExportFeatureReportCommand.ExecuteAsync(null);
         }
     }
 
@@ -58,8 +54,9 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainWindowViewModel vm)
         {
-            vm.ReportSourceCallback = CreateReportSourceCallback(vm);
-            vm.SaveUsageReportCallback = async () =>
+            var cs = vm.ConnectionSwitch;
+            cs.ReportSourceCallback = CreateReportSourceCallback(cs);
+            cs.SaveUsageReportCallback = async () =>
             {
                 var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                 {
@@ -73,25 +70,7 @@ public partial class MainWindow : Window
                 });
                 return file?.Path.LocalPath;
             };
-            await vm.ExportUsageReportCommand.ExecuteAsync(null);
-        }
-    }
-
-    private async void OnAddConnectionClick(object? sender, RoutedEventArgs e)
-    {
-        var dialog = new ConnectionDialog();
-        var result = await dialog.ShowDialog<ConnectionDialogViewModel?>(this);
-        if (result is not null && DataContext is MainWindowViewModel vm)
-        {
-            vm.AddCustomConnection(result.Name, result.Server, result.Database, result.Environment);
-        }
-    }
-
-    private async void OnDeleteConnectionClick(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is MainWindowViewModel vm && vm.SelectedConnection is { Source: "Custom" } profile)
-        {
-            await vm.DeleteCustomConnection(profile);
+            await cs.ExportUsageReportCommand.ExecuteAsync(null);
         }
     }
 
@@ -101,8 +80,8 @@ public partial class MainWindow : Window
         await dialog.ShowDialog(this);
         if (DataContext is MainWindowViewModel vm)
         {
-            vm.NotifyCanSyncAnsibleChanged();
-            vm.NotifyHasDevDirectoryChanged();
+            vm.ConnectionSwitch.NotifyCanSyncAnsibleChanged();
+            vm.ConnectionSwitch.NotifyHasDevDirectoryChanged();
         }
     }
 
@@ -110,18 +89,18 @@ public partial class MainWindow : Window
     {
         base.OnDataContextChanged(e);
         if (DataContext is MainWindowViewModel vm)
-            SetupApplyDevCallback(vm);
+            SetupApplyDevCallback(vm.ConnectionSwitch);
     }
 
-    private void SetupApplyDevCallback(MainWindowViewModel vm)
+    private void SetupApplyDevCallback(ConnectionSwitchDocumentViewModel cs)
     {
-        vm.ApplyDevDialogCallback = async (files, profile) =>
+        cs.ApplyDevDialogCallback = async (files, profile) =>
         {
             var dialog = new ApplyDevDialog(files, profile);
             return await dialog.ShowDialog<IReadOnlyList<string>?>(this);
         };
 
-        vm.ConfirmCallback = async (message, banner) =>
+        cs.ConfirmCallback = async (message, banner) =>
         {
             var dialog = new ConfirmDialog(message, banner);
             return await dialog.ShowDialog<bool>(this);
@@ -131,11 +110,12 @@ public partial class MainWindow : Window
     private async void OnExportConnectionsClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not MainWindowViewModel vm) return;
+        var cs = vm.ConnectionSwitch;
 
-        var profiles = vm.GetConnectionsForExport();
+        var profiles = cs.GetConnectionsForExport();
         if (profiles.Count == 0) return;
 
-        var exportVm = new ExportConnectionsViewModel(profiles, vm.ConnectionExportService);
+        var exportVm = new ExportConnectionsViewModel(profiles, cs.ConnectionExportService);
         var dialog = new ExportConnectionsWindow { DataContext = exportVm };
         await dialog.ShowDialog(this);
     }
@@ -157,6 +137,7 @@ public partial class MainWindow : Window
     private async void OnImportConnectionsClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not MainWindowViewModel vm) return;
+        var cs = vm.ConnectionSwitch;
 
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
@@ -176,7 +157,7 @@ public partial class MainWindow : Window
         var data = ms.ToArray();
 
         var importVm = new ImportConnectionsViewModel(
-            vm.ConnectionExportService, vm.SettingsServicePublic, vm.GetCustomConnections());
+            cs.ConnectionExportService, cs.SettingsServicePublic, cs.GetCustomConnections());
         importVm.LoadImportData(data);
 
         var dialog = new ImportConnectionsWindow { DataContext = importVm };
@@ -184,8 +165,8 @@ public partial class MainWindow : Window
 
         if (result is not null)
         {
-            vm.LoadConnectionsCommand.Execute(null);
-            vm.StatusMessage = $"匯入完成：新增 {result.Added}，覆蓋 {result.Overwritten}，跳過 {result.Skipped}";
+            cs.LoadConnectionsCommand.Execute(null);
+            cs.StatusMessage = $"匯入完成：新增 {result.Added}，覆蓋 {result.Overwritten}，跳過 {result.Skipped}";
         }
     }
 }
