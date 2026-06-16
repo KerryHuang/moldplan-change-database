@@ -73,20 +73,17 @@ public class ReportingDeployViewModelTests
     }
 
     [Fact]
-    public async Task DeployAll_PassesTargetAndSource_AndReportsStepsLive()
+    public async Task DeployAll_PassesTargetAndSource_AndPopulatesStepsFromResult()
     {
         var deploy = DefaultDeploy();
-        deploy.DeployAllAsync(Arg.Any<ReportingDeployParameters>(), Arg.Any<IProgress<DeployStep>?>(), Arg.Any<CancellationToken>())
-              .Returns(ci =>
-              {
-                  var prog = ci.ArgAt<IProgress<DeployStep>?>(1);
-                  prog?.Report(new DeployStep("01.sql", "建庫", DeployStatus.Running, null));
-                  prog?.Report(new DeployStep("01.sql", "建庫", DeployStatus.Success, null));
-                  return (IReadOnlyList<DeployStep>)new List<DeployStep>
-                  {
-                      new("01.sql", "建庫", DeployStatus.Success, null)
-                  };
-              });
+        deploy.DeployAllAsync(
+                Arg.Any<ReportingDeployParameters>(),
+                Arg.Any<IProgress<DeployStep>?>(),
+                Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<DeployStep>)new List<DeployStep>
+            {
+                new("01.sql", "建庫", DeployStatus.Success, null)
+            });
         var vm = CreateViewModel(deploy);
         vm.TargetDatabaseName = "MoldPlan-Reporting";
         vm.SourceDatabaseName = "gma-staging";
@@ -97,7 +94,6 @@ public class ReportingDeployViewModelTests
             Arg.Is<ReportingDeployParameters>(p =>
                 p.TargetDatabase == "MoldPlan-Reporting" && p.SourceDatabase == "gma-staging"),
             Arg.Any<IProgress<DeployStep>?>(), Arg.Any<CancellationToken>());
-        // 即時更新：01.sql 只出現一次，最終狀態為 Success（Running 被覆蓋）
         Assert.Single(vm.Steps, s => s.FileName == "01.sql");
         Assert.Equal(DeployStatus.Success, vm.Steps.Single(s => s.FileName == "01.sql").Status);
     }

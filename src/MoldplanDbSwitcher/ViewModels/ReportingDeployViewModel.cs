@@ -105,23 +105,12 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         IsBusy = true;
         try
         {
-            // SynchronousProgress：直接在呼叫執行緒觸發回呼，確保測試環境下步驟即時更新
-            var progress = new SynchronousProgress<DeployStep>(s =>
-            {
-                // 以 FileName 為鍵：已存在則就地更新（Running → Success/Failed），否則新增
-                var idx = -1;
-                for (int i = 0; i < Steps.Count; i++)
-                    if (Steps[i].FileName == s.FileName) { idx = i; break; }
-                if (idx >= 0) Steps[idx] = s; else Steps.Add(s);
-            });
-            await _deploy.DeployAllAsync(BuildParameters(), progress);
+            var result = await _deploy.DeployAllAsync(BuildParameters());
+            Steps.Clear();
+            foreach (var s in result) Steps.Add(s);
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
-        finally
-        {
-            IsBusy = false;
-            await ScanEnvironmentAsync();
-        }
+        finally { IsBusy = false; await ScanEnvironmentAsync(); }
     }
 
     [RelayCommand]
@@ -168,9 +157,4 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         await SaveExportSqlCallback(sql);
     }
 
-    /// <summary>同步觸發回呼的 IProgress 實作，避免 Progress&lt;T&gt; 在測試環境延遲執行。</summary>
-    private sealed class SynchronousProgress<T>(Action<T> handler) : IProgress<T>
-    {
-        public void Report(T value) => handler(value);
-    }
 }
