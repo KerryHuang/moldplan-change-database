@@ -51,7 +51,8 @@ public class ReportingScriptProvider : IReportingScriptProvider
         content = Regex.Replace(
             content,
             @"(@JobOwner\s+NVARCHAR\(\d+\)\s*=\s*N')[^']*(')",
-            $"$1{p.JobOwner}$2");
+            $"$1{p.JobOwner}$2",
+            RegexOptions.IgnoreCase);
         return content;
     }
 
@@ -65,10 +66,6 @@ public class ReportingScriptProvider : IReportingScriptProvider
             .Distinct().OrderBy(x => x);
         return numbers.Select(GetScript).ToList();
     }
-
-    // TODO(P2-T3 移除)：暫時相容舊 DeployService，待 T3 改用 Render。
-    public string RenderJobScript(int fileNumber, string databaseName, string jobOwner)
-        => Render(fileNumber, new ReportingDeployParameters(databaseName, databaseName, jobOwner));
 
     private static string StripBom(string s) => s.StartsWith('﻿') ? s.Substring(1) : s;
 }
