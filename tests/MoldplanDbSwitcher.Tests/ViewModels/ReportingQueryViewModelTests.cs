@@ -2,6 +2,7 @@ using MoldplanDbSwitcher.Models;
 using MoldplanDbSwitcher.Services;
 using MoldplanDbSwitcher.ViewModels;
 using System.Collections.Generic;
+using System.Linq;
 using NSubstitute;
 using Xunit;
 
@@ -54,6 +55,41 @@ public class ReportingQueryViewModelTests
 
         Assert.Equal(2, vm.ResultColumns.Count);
         Assert.Single(vm.ResultRows);
+    }
+
+    [Fact]
+    public async Task Query_PassesCheckedProjectionColumns()
+    {
+        var (objects, query, vm) = Create();
+        objects.GetColumnsAsync("T1", Arg.Any<CancellationToken>())
+            .Returns(new List<ReportingColumn>
+            {
+                new("c1", "int", false, null),
+                new("c2", "nvarchar", true, null),
+                new("c3", "datetime", true, null),
+            });
+        IReadOnlyList<string>? capturedColumns = null;
+        query.QueryTopNAsync("T1", Arg.Any<int>(), Arg.Any<IEnumerable<QueryFilterRow>>(), Arg.Any<IEnumerable<QuerySortRow>>(), Arg.Any<IEnumerable<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(ci =>
+            {
+                capturedColumns = ci.ArgAt<IEnumerable<string>?>(4)?.ToList();
+                return new QueryResult(System.Array.Empty<string>(), System.Array.Empty<IReadOnlyList<object?>>());
+            });
+
+        // 設定物件會觸發背景的 LoadObjectDetailAsync（填 ProjectionColumns）與自動查詢；
+        // 稍候讓背景完成後再手動設定欄位勾選，確保最終一次查詢帶入我們指定的投影。
+        vm.SelectedObject = new ReportingObject("Reporting", "T1", ReportingObjectKind.BaseTable, null);
+        await Task.Delay(50);
+
+        vm.ProjectionColumns.Clear();
+        vm.ProjectionColumns.Add(new ColumnSelectionItem("c1", "int") { IsSelected = true });
+        vm.ProjectionColumns.Add(new ColumnSelectionItem("c2", "nvarchar") { IsSelected = false });
+        vm.ProjectionColumns.Add(new ColumnSelectionItem("c3", "datetime") { IsSelected = true });
+
+        await vm.QueryCommand.ExecuteAsync(null);
+
+        Assert.NotNull(capturedColumns);
+        Assert.Equal(new[] { "c1", "c3" }, capturedColumns);
     }
 
     [Fact]

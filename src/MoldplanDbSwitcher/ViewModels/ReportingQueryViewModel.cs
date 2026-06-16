@@ -43,6 +43,7 @@ public partial class ReportingQueryViewModel : DocumentViewModel
     public ObservableCollection<IReadOnlyList<object?>> ResultRows { get; } = new();
     public ObservableCollection<ReportingColumn> SelectedColumns { get; } = new();
     public ObservableCollection<string> AvailableColumnNames { get; } = new();
+    public ObservableCollection<ColumnSelectionItem> ProjectionColumns { get; } = new();
     public ObservableCollection<RefreshLogEntry> RefreshLog { get; } = new();
     public ObservableCollection<QueryFilterRow> Filters { get; } = new();
     public ObservableCollection<QuerySortRow> Sorts { get; } = new();
@@ -73,6 +74,12 @@ public partial class ReportingQueryViewModel : DocumentViewModel
     [RelayCommand]
     private void RemoveSort(QuerySortRow row) => Sorts.Remove(row);
 
+    [RelayCommand]
+    private void SelectAllColumns() { foreach (var c in ProjectionColumns) c.IsSelected = true; }
+
+    [RelayCommand]
+    private void ClearAllColumns() { foreach (var c in ProjectionColumns) c.IsSelected = false; }
+
     public async Task UseConnectionAsync(string connectionString)
     {
         var dbHint = TryExtractDatabase(connectionString);
@@ -85,6 +92,7 @@ public partial class ReportingQueryViewModel : DocumentViewModel
         ResultRows.Clear();
         SelectedColumns.Clear();
         AvailableColumnNames.Clear();
+        ProjectionColumns.Clear();
         Filters.Clear();
         Sorts.Clear();
         RefreshLog.Clear();
@@ -151,7 +159,8 @@ public partial class ReportingQueryViewModel : DocumentViewModel
         {
             IsBusy = true;
             ErrorMessage = null;
-            var result = await _query.QueryTopNAsync(SelectedObject.Name, TopN, Filters, Sorts);
+            var projected = ProjectionColumns.Where(c => c.IsSelected).Select(c => c.Name).ToList();
+            var result = await _query.QueryTopNAsync(SelectedObject.Name, TopN, Filters, Sorts, projected);
             ResultColumns.Clear();
             foreach (var c in result.Columns) ResultColumns.Add(c);
             ResultRows.Clear();
@@ -166,6 +175,7 @@ public partial class ReportingQueryViewModel : DocumentViewModel
     {
         SelectedColumns.Clear();
         AvailableColumnNames.Clear();
+        ProjectionColumns.Clear();
         RefreshLog.Clear();
         if (obj == null) return;
         try
@@ -173,6 +183,8 @@ public partial class ReportingQueryViewModel : DocumentViewModel
             foreach (var c in await _objects.GetColumnsAsync(obj.Name)) SelectedColumns.Add(c);
             AvailableColumnNames.Clear();
             foreach (var c in SelectedColumns) AvailableColumnNames.Add(c.Name);
+            ProjectionColumns.Clear();
+            foreach (var c in SelectedColumns) ProjectionColumns.Add(new ColumnSelectionItem(c.Name, c.DataType));
             if (obj.Kind != ReportingObjectKind.SystemTable && obj.Kind != ReportingObjectKind.Procedure)
                 foreach (var l in await _objects.GetRefreshLogAsync(obj.Name)) RefreshLog.Add(l);
         }
