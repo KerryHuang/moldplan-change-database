@@ -25,6 +25,7 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         _objects = objectsFactory(initialConnectionString);
         _deploy = deployFactory(initialConnectionString);
         _targetDatabaseName = initialDatabaseName;
+        _sourceDatabaseName = string.Empty;
         _jobOwner = "sa";
         Title = "Reporting 部署";
     }
@@ -37,6 +38,7 @@ public partial class ReportingDeployViewModel : DocumentViewModel
     public ObservableCollection<DeployStep> Steps { get; } = new();
 
     [ObservableProperty] private string _targetDatabaseName;
+    [ObservableProperty] private string _sourceDatabaseName;
     [ObservableProperty] private string _jobOwner;
     [ObservableProperty] private bool _schemaExists;
     [ObservableProperty] private int _tableCount;
@@ -94,6 +96,9 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         finally { IsBusy = false; }
     }
 
+    private ReportingDeployParameters BuildParameters() =>
+        new(TargetDatabaseName, SourceDatabaseName, JobOwner);
+
     [RelayCommand]
     private async Task DeployAllAsync()
     {
@@ -101,20 +106,13 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         IsBusy = true;
         try
         {
-            var schema = await _deploy.DeploySchemaAsync();
-            Steps.Add(schema);
-            if (schema.Status != DeployStatus.Success) return;
-
-            var tables = await _deploy.DeployTablesAsync();
-            Steps.Add(tables);
-            if (tables.Status != DeployStatus.Success) return;
-
-            var views = await _deploy.DeployViewsAsync();
-            Steps.Add(views);
-            if (views.Status != DeployStatus.Success) return;
-
-            var sp = await _deploy.DeployProceduresAsync();
-            Steps.Add(sp);
+            var progress = new Progress<DeployStep>(step =>
+            {
+                // 只在最終狀態（非 Running）才加入清單，或以最新狀態更新
+            });
+            var steps = await _deploy.DeployAllAsync(BuildParameters(), progress);
+            foreach (var step in steps)
+                Steps.Add(step);
         }
         finally { IsBusy = false; }
     }
@@ -125,7 +123,7 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         IsBusy = true;
         try
         {
-            var step = await _deploy.DeployJobAsync(5, TargetDatabaseName, JobOwner);
+            var step = await _deploy.DeployJobAsync(6, BuildParameters());
             Steps.Add(step);
         }
         finally { IsBusy = false; }
@@ -137,7 +135,7 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         IsBusy = true;
         try
         {
-            var step = await _deploy.DeployJobAsync(6, TargetDatabaseName, JobOwner);
+            var step = await _deploy.DeployJobAsync(7, BuildParameters());
             Steps.Add(step);
         }
         finally { IsBusy = false; }
@@ -148,7 +146,7 @@ public partial class ReportingDeployViewModel : DocumentViewModel
         IsBusy = true;
         try
         {
-            var step = await _deploy.DropAllAsync(confirmName);
+            var step = await _deploy.DropAllAsync(BuildParameters(), confirmName);
             Steps.Add(step);
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }

@@ -46,19 +46,20 @@ public class ReportingDeployViewModelTests
     public async Task DeployAllAsync_RunsAllSteps()
     {
         var deploy = Substitute.For<IReportingDeployService>();
-        deploy.DeploySchemaAsync(Arg.Any<IProgress<DeployStep>>(), Arg.Any<CancellationToken>())
-            .Returns(new DeployStep("01.sql", "schema", DeployStatus.Success, null));
-        deploy.DeployTablesAsync(Arg.Any<IProgress<DeployStep>>(), Arg.Any<CancellationToken>())
-            .Returns(new DeployStep("02.sql", "tables", DeployStatus.Success, null));
-        deploy.DeployViewsAsync(Arg.Any<IProgress<DeployStep>>(), Arg.Any<CancellationToken>())
-            .Returns(new DeployStep("03.sql", "views", DeployStatus.Success, null));
-        deploy.DeployProceduresAsync(Arg.Any<IProgress<DeployStep>>(), Arg.Any<CancellationToken>())
-            .Returns(new DeployStep("04.sql", "sp", DeployStatus.Success, null));
+        // 回傳 7 個成功步驟（01→07 序列）
+        var successSteps = Enumerable.Range(1, 7)
+            .Select(i => new DeployStep($"0{i}.sql", $"step{i}", DeployStatus.Success, null))
+            .ToList<DeployStep>();
+        deploy.DeployAllAsync(
+                Arg.Any<ReportingDeployParameters>(),
+                Arg.Any<IProgress<DeployStep>>(),
+                Arg.Any<CancellationToken>())
+            .Returns(successSteps);
         var sut = CreateSut(deploy: deploy);
 
         await sut.DeployAllCommand.ExecuteAsync(null);
 
-        Assert.Equal(4, sut.Steps.Count);
+        Assert.Equal(7, sut.Steps.Count);
         Assert.All(sut.Steps, s => Assert.Equal(DeployStatus.Success, s.Status));
     }
 
@@ -143,17 +144,25 @@ public class ReportingDeployViewModelTests
     }
 
     [Fact]
-    public async Task DeployAllAsync_StopsOnFailure()
+    public async Task DeployAllAsync_StopsOnFailure_ByReturningFailedSteps()
     {
         var deploy = Substitute.For<IReportingDeployService>();
-        deploy.DeploySchemaAsync(Arg.Any<IProgress<DeployStep>>(), Arg.Any<CancellationToken>())
-            .Returns(new DeployStep("01.sql", "schema", DeployStatus.Failed, "boom"));
+        // 服務在第 1 步即失敗，只回傳 1 個步驟
+        var failedSteps = new List<DeployStep>
+        {
+            new("01.sql", "schema", DeployStatus.Failed, "boom")
+        };
+        deploy.DeployAllAsync(
+                Arg.Any<ReportingDeployParameters>(),
+                Arg.Any<IProgress<DeployStep>>(),
+                Arg.Any<CancellationToken>())
+            .Returns(failedSteps);
         var sut = CreateSut(deploy: deploy);
 
         await sut.DeployAllCommand.ExecuteAsync(null);
 
         Assert.Single(sut.Steps);
-        await deploy.DidNotReceive().DeployTablesAsync(Arg.Any<IProgress<DeployStep>>(), Arg.Any<CancellationToken>());
+        Assert.Equal(DeployStatus.Failed, sut.Steps[0].Status);
     }
 
     [Fact]
