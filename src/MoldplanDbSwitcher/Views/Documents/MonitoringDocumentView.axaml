@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MoldplanDbSwitcher.ViewModels.Documents"
+             x:Class="MoldplanDbSwitcher.Views.Documents.MonitoringDocumentView"
+             x:DataType="vm:MonitoringDocumentViewModel">
+  <DockPanel Margin="8">
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+      <Button Content="重新整理" Command="{Binding RefreshCommand}" IsEnabled="{Binding !IsBusy}" />
+      <CheckBox Content="自動刷新" IsChecked="{Binding AutoRefreshEnabled}" VerticalAlignment="Center" />
+      <TextBlock Text="間隔(秒)：" VerticalAlignment="Center" />
+      <NumericUpDown Value="{Binding RefreshIntervalSeconds}" Minimum="5" Maximum="3600" Width="120" Increment="5" />
+      <Button Content="觸發 Daily Job" Command="{Binding TriggerDailyJobCommand}" IsEnabled="{Binding !IsBusy}" />
+      <Button Content="觸發 Hourly Job" Command="{Binding TriggerHourlyJobCommand}" IsEnabled="{Binding !IsBusy}" />
+    </StackPanel>
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="16" Margin="0,0,0,8">
+      <TextBlock Text="{Binding Summary.TotalJobs, StringFormat='Job 總數：{0}'}" FontWeight="Bold" />
+      <TextBlock Text="{Binding Summary.SucceededCount, StringFormat='成功：{0}'}" Foreground="Green" />
+      <TextBlock Text="{Binding Summary.FailedCount, StringFormat='失敗：{0}'}" Foreground="Crimson" />
+      <TextBlock Text="{Binding Summary.DisabledCount, StringFormat='停用：{0}'}" Foreground="Gray" />
+    </StackPanel>
+    <TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="Crimson" TextWrapping="Wrap"
+               IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <Grid RowDefinitions="2*,Auto,*">
+      <DataGrid Grid.Row="0" ItemsSource="{Binding Jobs}" IsReadOnly="True" AutoGenerateColumns="False"
+                GridLinesVisibility="Horizontal" CanUserResizeColumns="True">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Job 名稱" Binding="{Binding JobName}" Width="*" />
+          <DataGridTextColumn Header="狀態" Binding="{Binding StatusText}" Width="80" />
+          <DataGridTextColumn Header="上次執行時間" Binding="{Binding LastRunTime}" Width="170" />
+          <DataGridTextColumn Header="上次結果" Binding="{Binding LastRunOutcome}" Width="90" />
+          <DataGridTextColumn Header="下次排程時間" Binding="{Binding NextRunTime}" Width="170" />
+          <DataGridTextColumn Header="耗時(秒)" Binding="{Binding LastDurationSeconds}" Width="90" />
+        </DataGrid.Columns>
+      </DataGrid>
+      <GridSplitter Grid.Row="1" Height="6" HorizontalAlignment="Stretch" ResizeDirection="Rows" />
+      <DataGrid Grid.Row="2" ItemsSource="{Binding RefreshLog}" IsReadOnly="True" AutoGenerateColumns="True" />
+    </Grid>
+  </DockPanel>
+</UserControl>

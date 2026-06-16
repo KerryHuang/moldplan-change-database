@@ -9,4 +9,7 @@ public record AgentJobStatus(
     DateTime? LastRunTime,
     string LastRunOutcome,
     DateTime? NextRunTime,
-    int? LastDurationSeconds);
+    int? LastDurationSeconds)
+{
+    public string StatusText => Enabled ? "啟用" : "停用";
+}
