@@ -48,6 +48,8 @@
           <Button DockPanel.Dock="Right" Content="瀏覽..." Click="OnBrowseReportingScriptsOverridePathClick" Margin="8,0,0,0" />
           <TextBox x:Name="ReportingScriptsOverridePathBox" Watermark="留空則使用程式內嵌腳本" />
         </DockPanel>
+        <TextBlock Text="源頭 repo：gitlab.com/wdmis/waydosoft.moldplan.docs（clone 後指向其中的 Reporting 腳本資料夾）"
+                   FontSize="10" Foreground="Gray" />
       </StackPanel>
 
       <StackPanel Spacing="4">

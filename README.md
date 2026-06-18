@@ -29,13 +29,16 @@
 
 ### Reporting 部署
 
-部署 / 重建 / 移除目標資料庫的 `Reporting` schema 一鍵化（取代手動執行 `docs/scripts/Reporting/*.sql`）：
+部署 / 重建 / 移除目標資料庫的 `Reporting` schema 一鍵化（部署腳本已**內嵌**於 App，免外部依賴）：
 
-- 環境掃描：顯示 Schema 是否存在、Tables / Views / SP 數量
-- **部署全部 (01→04)**：依序執行 Schema → Tables → Views → SP；完整部署後按鈕自動停用並顯示「✓ 已完整部署」
-- **部署 Daily Job (05) / Hourly Job (06)**：自動替換 `<<CHANGE_ME>>` 為目標 DB 名稱
-- **⚠ 移除全部 (98)**：二次防呆，需手動輸入目標 DB 名稱才能執行
-- 腳本路徑可在「設定」指定，或透過 `MOLDPLAN_REPO` 環境變數提供（預設 `D:\Repos\MoldPlan-Workspace\docs\scripts\Reporting`）
+- 輸入**目標報表庫名**（預設 `MoldPlan-Reporting`）與**來源主庫名**；部署時自動替換腳本中的 `<<Database>>` / `<<MAINDB>>` 雙占位符
+- 環境掃描：顯示資料庫 / Schema 是否存在、Tables / Views / SP 數量
+- **部署全部 (01→07)**：master 連線建庫 → Schema → Tables → Views → SP → Daily / Hourly Job；完整部署後按鈕自動停用並顯示「✓ 已完整部署」
+- **部署 Daily Job (06) / Hourly Job (07)**：單獨部署 Agent Job
+- **匯出 SQL**：產出合併、已替換占位符的 `.sql` 供 SSMS 手動執行
+- **⚠ 移除全部 (98)**：二次防呆，需手動輸入目標庫名才能執行
+- ⚠ 報表庫須與來源主庫位於**同一個 SQL Server instance**（View 以三段式跨庫參照）
+- 腳本來源：預設用 App 內嵌的 9 個腳本；如需用外部最新版，於「設定 → Reporting 腳本覆寫路徑」指定本機資料夾。**源頭 repo**：[`gitlab.com/wdmis/waydosoft.moldplan.docs`](https://gitlab.com/wdmis/waydosoft.moldplan.docs)（clone 後指向其中的 Reporting 腳本資料夾即可覆寫）
 
 ## SERVER.txt 格式
 
@@ -92,7 +95,7 @@ app,my-database,192.168.1.100,XXX,1
 | `AnsibleRepoPath` | deploy-ansible Repo 路徑（同步 Ansible 連線用） |
 | `VaultPasswordFile` | Ansible Vault 密碼檔（預設 `~/.ansible-vault-pass`） |
 | `DevDirectory` | 「套用開發設定」掃描根目錄 |
-| `MoldPlanScriptsPath` | Reporting 部署腳本路徑（留白則讀 `MOLDPLAN_REPO` 環境變數） |
+| `ReportingScriptsOverridePath` | Reporting 部署腳本覆寫資料夾（留空＝用 App 內嵌腳本；源頭 repo：`gitlab.com/wdmis/waydosoft.moldplan.docs`） |
 
 ## 下載與執行
 
