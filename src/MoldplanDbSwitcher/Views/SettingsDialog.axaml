@@ -43,16 +43,6 @@
       </StackPanel>
 
       <StackPanel Spacing="4">
-        <TextBlock Text="MoldPlan 腳本路徑：" />
-        <DockPanel>
-          <Button DockPanel.Dock="Right" Content="瀏覽..." Click="OnBrowseScriptsPathClick" Margin="8,0,0,0" />
-          <TextBox x:Name="MoldPlanScriptsPathBox" Watermark="留白則使用 MOLDPLAN_REPO 環境變數" />
-        </DockPanel>
-        <TextBlock Text="留白時自動使用 MOLDPLAN_REPO\docs\scripts\Reporting"
-                   FontSize="10" Foreground="Gray" />
-      </StackPanel>
-
-      <StackPanel Spacing="4">
         <TextBlock Text="Reporting 腳本覆寫路徑（留空＝用內嵌腳本）：" />
         <DockPanel>
           <Button DockPanel.Dock="Right" Content="瀏覽..." Click="OnBrowseReportingScriptsOverridePathClick" Margin="8,0,0,0" />

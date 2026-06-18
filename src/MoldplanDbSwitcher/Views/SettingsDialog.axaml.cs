@@ -19,7 +19,6 @@ public partial class SettingsDialog : Window
         AnsibleRepoPathBox.Text = settings.AnsibleRepoPath;
         VaultPasswordFileBox.Text = settings.VaultPasswordFile;
         DevDirectoryBox.Text = settings.DevDirectory;
-        MoldPlanScriptsPathBox.Text = settings.MoldPlanScriptsPath ?? string.Empty;
         GitHubTokenBox.Text = settings.GitHubToken ?? string.Empty;
         ReportingScriptsOverridePathBox.Text = settings.ReportingScriptsOverridePath;
     }
@@ -31,7 +30,6 @@ public partial class SettingsDialog : Window
             AnsibleRepoPath = AnsibleRepoPathBox.Text ?? string.Empty,
             VaultPasswordFile = VaultPasswordFileBox.Text ?? string.Empty,
             DevDirectory = DevDirectoryBox.Text ?? string.Empty,
-            MoldPlanScriptsPath = string.IsNullOrWhiteSpace(MoldPlanScriptsPathBox.Text) ? null : MoldPlanScriptsPathBox.Text,
             GitHubToken = string.IsNullOrWhiteSpace(GitHubTokenBox.Text) ? null : GitHubTokenBox.Text,
             ReportingScriptsOverridePath = ReportingScriptsOverridePathBox.Text ?? string.Empty
         });
@@ -71,17 +69,6 @@ public partial class SettingsDialog : Window
         });
         if (folders.Count > 0)
             DevDirectoryBox.Text = folders[0].Path.LocalPath;
-    }
-
-    private async void OnBrowseScriptsPathClick(object? sender, RoutedEventArgs e)
-    {
-        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-        {
-            Title = "選擇 MoldPlan 腳本目錄",
-            AllowMultiple = false
-        });
-        if (folders.Count > 0)
-            MoldPlanScriptsPathBox.Text = folders[0].Path.LocalPath;
     }
 
     private async void OnBrowseReportingScriptsOverridePathClick(object? sender, RoutedEventArgs e)

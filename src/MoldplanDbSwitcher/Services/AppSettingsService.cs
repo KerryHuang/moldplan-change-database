@@ -42,24 +42,4 @@ public class AppSettingsService : IAppSettingsService
         var json = JsonSerializer.Serialize(settings, JsonOptions);
         File.WriteAllText(_filePath, json);
     }
-
-    private static readonly string DefaultScriptsRelative = Path.Combine("docs", "scripts", "Reporting");
-    private static readonly string FallbackAbsolute = OperatingSystem.IsWindows()
-        ? @"D:\Repos\MoldPlan-Workspace\docs\scripts\Reporting"
-        : Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            "repos", "MoldPlan-Workspace", "docs", "scripts", "Reporting");
-
-    public string GetMoldPlanScriptsPath()
-    {
-        var settings = Load();
-        if (!string.IsNullOrWhiteSpace(settings.MoldPlanScriptsPath))
-            return settings.MoldPlanScriptsPath;
-
-        var envRepo = Environment.GetEnvironmentVariable("MOLDPLAN_REPO");
-        if (!string.IsNullOrWhiteSpace(envRepo))
-            return Path.Combine(envRepo, DefaultScriptsRelative);
-
-        return FallbackAbsolute;
-    }
 }

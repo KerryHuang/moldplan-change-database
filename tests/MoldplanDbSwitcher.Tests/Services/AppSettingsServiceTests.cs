@@ -52,31 +52,6 @@ public class AppSettingsServiceTests : IDisposable
     }
 
     [Fact]
-    public void GetMoldPlanScriptsPath_EnvVarSet_UsesEnvVar()
-    {
-        var temp = Path.Combine(Path.GetTempPath(), "mp_" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path.Combine(temp, "docs", "scripts", "Reporting"));
-        try
-        {
-            Environment.SetEnvironmentVariable("MOLDPLAN_REPO", temp);
-            var path = _sut.GetMoldPlanScriptsPath();
-            Assert.Equal(Path.Combine(temp, "docs", "scripts", "Reporting"), path);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("MOLDPLAN_REPO", null);
-            if (Directory.Exists(temp)) Directory.Delete(temp, true);
-        }
-    }
-
-    [Fact]
-    public void GetMoldPlanScriptsPath_SettingsOverride_TakesPrecedence()
-    {
-        _sut.Save(new AppSettings { MoldPlanScriptsPath = @"C:\custom\path" });
-        Assert.Equal(@"C:\custom\path", _sut.GetMoldPlanScriptsPath());
-    }
-
-    [Fact]
     public void Save_ReportingScriptsOverridePath_RoundTrips()
     {
         var settings = new AppSettings
