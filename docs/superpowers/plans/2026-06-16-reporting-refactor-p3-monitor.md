@@ -1,5 +1,7 @@
 # Reporting 重構 P3：監控儀表板 Implementation Plan
 
+> ⚠ **歷史紀錄（保留作設計過程參考，內文未更新）**。文中關於 Reporting 部署腳本來源的描述（MoldPlanScriptsPath / MOLDPLAN_REPO / `<<CHANGE_ME>>` / 外部資料夾預設 / D:\Repos\MoldPlan-Workspace）已於 v1.4.x 變更：腳本改為**內嵌**、雙占位符 `<<Database>>`/`<<MAINDB>>`、源頭 repo＝`gitlab.com/wdmis/waydosoft.moldplan.docs`。現況請見 README。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** 新增「Reporting 監控」MDI 文件：儀表板式呈現全部 SQL Agent Job 狀態 + 各寬表 RefreshLog，含狀態彙總卡與自動刷新（預設 30 秒），並可手動觸發 Reporting 兩個刷新 Job。

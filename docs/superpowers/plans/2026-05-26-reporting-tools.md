@@ -1,5 +1,7 @@
 # Reporting 查詢器 + 部署管理器 實作計畫
 
+> ⚠ **歷史紀錄（保留作設計過程參考，內文未更新）**。文中關於 Reporting 部署腳本來源的描述（MoldPlanScriptsPath / MOLDPLAN_REPO / `<<CHANGE_ME>>` / 外部資料夾預設 / D:\Repos\MoldPlan-Workspace）已於 v1.4.x 變更：腳本改為**內嵌**、雙占位符 `<<Database>>`/`<<MAINDB>>`、源頭 repo＝`gitlab.com/wdmis/waydosoft.moldplan.docs`。現況請見 README。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在 MoldplanDbSwitcher 新增兩個分頁 — Reporting 寬表查詢器（模組 A）與 Reporting 物件部署管理器（模組 B），讓 DBA 能在同一個桌面 App 切換連線、查詢寬表、部署 / 重建 SSDT 腳本。

@@ -1,5 +1,7 @@
 # Reporting 整體重構設計
 
+> ⚠ **歷史紀錄（保留作設計過程參考，內文未更新）**。文中關於 Reporting 部署腳本來源的描述（MoldPlanScriptsPath / MOLDPLAN_REPO / `<<CHANGE_ME>>` / 外部資料夾預設 / D:\Repos\MoldPlan-Workspace）已於 v1.4.x 變更：腳本改為**內嵌**、雙占位符 `<<Database>>`/`<<MAINDB>>`、源頭 repo＝`gitlab.com/wdmis/waydosoft.moldplan.docs`。現況請見 README。
+
 > 日期：2026-06-16
 > 狀態：設計已確認，待寫實作計畫
 > 範圍：MoldplanDbSwitcher 的 Reporting 功能整體重構 + App shell 改為 Specurai 式選單列 + MDI 文件區

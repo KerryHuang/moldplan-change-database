@@ -1,5 +1,7 @@
 # Reporting 重構 P2：部署重構 Implementation Plan
 
+> ⚠ **歷史紀錄（保留作設計過程參考，內文未更新）**。文中關於 Reporting 部署腳本來源的描述（MoldPlanScriptsPath / MOLDPLAN_REPO / `<<CHANGE_ME>>` / 外部資料夾預設 / D:\Repos\MoldPlan-Workspace）已於 v1.4.x 變更：腳本改為**內嵌**、雙占位符 `<<Database>>`/`<<MAINDB>>`、源頭 repo＝`gitlab.com/wdmis/waydosoft.moldplan.docs`。現況請見 README。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** 讓 Reporting 部署對齊新的 9 檔雙占位符腳本集（`<<Database>>` 目標報表庫 + `<<MAINDB>>` 來源主庫），腳本內嵌為 EmbeddedResource（可外部覆寫），新增「匯出 SQL」與安裝狀態掃描。
