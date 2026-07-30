@@ -8,7 +8,7 @@
 
 ### 連線切換
 
-- 讀取 [TableSpec (DatabaseDescriptionApp)](https://github.com/KerryHuang/DatabaseDescriptionApp) 的連線設定
+- 讀取 [Specurai (DatabaseDescriptionApp)](https://github.com/KerryHuang/DatabaseDescriptionApp) 的連線設定（Specurai 端停用的連線不會列入）
 - 支援新增、編輯、刪除自訂連線
 - 自動搜尋 WDMIS 目錄下的 `SERVER.txt`
 - 顯示變更前後對比，確認後套用
@@ -82,9 +82,11 @@ app,my-database,192.168.1.100,XXX,1
 
 | 來源 | 路徑 | 說明 |
 |------|------|------|
-| TableSpec | `%AppData%/TableSpec/connections.json` | 與 DatabaseDescriptionApp 共用（唯讀） |
+| Specurai | `%AppData%/Specurai/connections.json` | 與 DatabaseDescriptionApp 共用（唯讀） |
 | 自訂 | `%AppData%/MoldplanDbSwitcher/connections.json` | 本應用程式管理 |
 | Ansible | `deploy-ansible` repo（需在「設定」指定路徑） | 從 Ansible vault 解密讀取，需 `~/.ansible-vault-pass` |
+
+Specurai 端標記為停用的連線不會列入可切換清單，停用只能在 Specurai 的連線設定畫面操作。
 
 ## 應用程式設定
 

@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 MoldplanDbSwitcher — 跨平台 Avalonia 桌面應用程式，用於切換 WDMIS 系統的資料庫連線。選擇連線後替換 `SERVER.txt` 中的伺服器位址與資料庫名稱。
 
-`apps/DatabaseDescriptionApp` 是 git submodule（唯讀參考），本專案讀取其 `%AppData%/TableSpec/connections.json` 設定檔。
+`apps/DatabaseDescriptionApp` 是 git submodule（唯讀參考），本專案讀取其 `%AppData%/Specurai/connections.json` 設定檔。
 
 ## Build & Test Commands
 
@@ -35,8 +35,10 @@ src/MoldplanDbSwitcher/
 **Services 的可測試性設計：** `SettingsService`、`ServerTxtService`、`ConnectionSourceService` 都有接受路徑參數的建構式，測試時注入臨時目錄避免碰到真實檔案系統。
 
 **連線來源：**
-- TableSpec: `%AppData%/TableSpec/connections.json`（PascalCase JSON，需 `PropertyNameCaseInsensitive = true`）
+- Specurai: `%AppData%/Specurai/connections.json`（PascalCase JSON，需 `PropertyNameCaseInsensitive = true`）
 - 自訂: `%AppData%/MoldplanDbSwitcher/connections.json`
+
+Specurai 端標記為停用（`"IsEnabled": false`）的連線不會列入可切換清單；舊設定檔沒有這個欄位，視為啟用。停用只能在 Specurai 的連線設定畫面操作。
 
 **SERVER.txt 搜尋路徑（跨平台）：**
 - Windows: `C:\WDMIS\SERVER.txt`, `D:\WDMIS\SERVER.txt`

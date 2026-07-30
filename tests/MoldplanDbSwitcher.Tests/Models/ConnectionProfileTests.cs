@@ -72,10 +72,10 @@ public class ConnectionProfileTests
     [Fact]
     public void Source_IsJsonIgnored()
     {
-        var profile = new ConnectionProfile { Name = "test", Source = "TableSpec" };
+        var profile = new ConnectionProfile { Name = "test", Source = "Specurai" };
         var json = JsonSerializer.Serialize(profile);
         Assert.DoesNotContain("Source", json);
-        Assert.DoesNotContain("TableSpec", json);
+        Assert.DoesNotContain("Specurai", json);
     }
 
     [Fact]
