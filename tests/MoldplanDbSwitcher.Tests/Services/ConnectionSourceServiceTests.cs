@@ -109,4 +109,61 @@ public class ConnectionSourceServiceTests
             Directory.Delete(tempDir, true);
         }
     }
+
+    [Fact]
+    public void LoadSpecuraiConnections_DisabledProfile_IsExcluded()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "SpecuraiDisabled_" + Guid.NewGuid());
+        Directory.CreateDirectory(tempDir);
+        var tempPath = Path.Combine(tempDir, "connections.json");
+        File.WriteAllText(tempPath, """
+        {
+            "Profiles": [
+                { "Id": "1", "Name": "enabled", "Server": "1.1.1.1", "Database": "db1", "IsEnabled": true },
+                { "Id": "2", "Name": "disabled", "Server": "2.2.2.2", "Database": "db2", "IsEnabled": false }
+            ]
+        }
+        """);
+
+        try
+        {
+            var service = new ConnectionSourceService(_settingsService, tempPath);
+            var result = service.LoadSpecuraiConnections();
+
+            Assert.Single(result);
+            Assert.Equal("enabled", result[0].Name);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void LoadSpecuraiConnections_MissingIsEnabledField_TreatedAsEnabled()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "SpecuraiLegacy_" + Guid.NewGuid());
+        Directory.CreateDirectory(tempDir);
+        var tempPath = Path.Combine(tempDir, "connections.json");
+        File.WriteAllText(tempPath, """
+        {
+            "Profiles": [
+                { "Id": "1", "Name": "legacy", "Server": "1.1.1.1", "Database": "db1" }
+            ]
+        }
+        """);
+
+        try
+        {
+            var service = new ConnectionSourceService(_settingsService, tempPath);
+            var result = service.LoadSpecuraiConnections();
+
+            Assert.Single(result);
+            Assert.Equal("legacy", result[0].Name);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
 }

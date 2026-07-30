@@ -37,6 +37,13 @@ public class ConnectionProfile
     [JsonPropertyName("environment")]
     public DatabaseEnvironment Environment { get; set; } = DatabaseEnvironment.Staging;
 
+    /// <summary>
+    /// 是否啟用。Specurai 端停用的連線不會出現在可切換的連線清單中。
+    /// 舊設定檔沒有這個欄位，預設 true 使其維持啟用。
+    /// </summary>
+    [JsonPropertyName("isEnabled")]
+    public bool IsEnabled { get; set; } = true;
+
     [JsonIgnore]
     public string Source { get; set; } = "Custom";
 }

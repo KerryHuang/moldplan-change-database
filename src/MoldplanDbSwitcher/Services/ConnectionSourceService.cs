@@ -36,10 +36,13 @@ public class ConnectionSourceService : IConnectionSourceService
             });
             if (data?.Profiles is null) return [];
 
-            foreach (var p in data.Profiles)
+            // Specurai 端停用的連線不提供切換，與其各功能的連線選單一致
+            var enabled = data.Profiles.Where(p => p.IsEnabled).ToList();
+
+            foreach (var p in enabled)
                 p.Source = "Specurai";
 
-            return data.Profiles;
+            return enabled;
         }
         catch
         {
