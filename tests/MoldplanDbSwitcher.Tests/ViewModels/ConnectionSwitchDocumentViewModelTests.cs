@@ -401,8 +401,8 @@ public class ConnectionSwitchDocumentViewModelTests
     {
         _ansibleSyncService.SyncAsync().Returns(new List<ConnectionProfile>
         {
-            new() { Name = "客戶A - 正式", Server = "s", Database = "d", Source = "Ansible" },
-            new() { Name = "客戶A - 測試", Server = "s", Database = "d", Source = "Ansible" },
+            new() { Name = "客戶A - 正式", Server = "s", Database = "d", Source = "MoldPlan Center" },
+            new() { Name = "客戶A - 測試", Server = "s", Database = "d", Source = "MoldPlan Center" },
         });
         var vm = CreateVm();
 

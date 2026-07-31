@@ -155,14 +155,14 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
     private async Task SyncAnsible()
     {
         IsSyncingAnsible = true;
-        StatusMessage = "正在從 Ansible 同步連線...";
+        StatusMessage = "正在從 MoldPlan Center 同步連線...";
         try
         {
             _ansibleConnections = await _ansibleSyncService.SyncAsync();
             foreach (var p in _ansibleConnections)
                 p.Environment = DatabaseEnvironmentInference.FromName(p.Name);
             LoadConnections();
-            StatusMessage = $"已同步 {_ansibleConnections.Count} 個 Ansible 連線";
+            StatusMessage = $"已同步 {_ansibleConnections.Count} 個 MoldPlan Center 連線";
         }
         catch (Exception ex)
         {
@@ -445,7 +445,7 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
 
     public IReadOnlyList<ConnectionProfile> GetConnectionsForExport()
         => Connections
-            .Where(c => c.Source is "Custom" or "Ansible")
+            .Where(c => c.Source is "Custom" or "MoldPlan Center")
             .ToList();
 
     public IReadOnlyList<ConnectionProfile> GetCustomConnections()
@@ -454,14 +454,14 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
     public ReportSourceOptions GetAvailableSources() => new(
         Specurai: Connections.Any(c => c.Source == "Specurai"),
         Custom: Connections.Any(c => c.Source == "Custom"),
-        AnsibleProduction: Connections.Any(c => c.Source == "Ansible" && c.Name.EndsWith("- 正式")),
-        AnsibleStaging: Connections.Any(c => c.Source == "Ansible" && c.Name.EndsWith("- 測試")));
+        AnsibleProduction: Connections.Any(c => c.Source == "MoldPlan Center" && c.Name.EndsWith("- 正式")),
+        AnsibleStaging: Connections.Any(c => c.Source == "MoldPlan Center" && c.Name.EndsWith("- 測試")));
 
     public IReadOnlyList<ConnectionProfile> FilterConnectionsForReport(ReportSourceOptions options)
         => Connections.Where(c =>
             (options.Specurai && c.Source == "Specurai") ||
             (options.Custom && c.Source == "Custom") ||
-            (options.AnsibleProduction && c.Source == "Ansible" && c.Name.EndsWith("- 正式")) ||
-            (options.AnsibleStaging && c.Source == "Ansible" && c.Name.EndsWith("- 測試"))
+            (options.AnsibleProduction && c.Source == "MoldPlan Center" && c.Name.EndsWith("- 正式")) ||
+            (options.AnsibleStaging && c.Source == "MoldPlan Center" && c.Name.EndsWith("- 測試"))
         ).ToList();
 }

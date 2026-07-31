@@ -13,12 +13,12 @@
       <TextBlock Text="連線來源：" VerticalAlignment="Center" />
       <CheckBox Content="Specurai" IsChecked="{Binding ShowSpecurai}" />
       <CheckBox Content="自訂" IsChecked="{Binding ShowCustom}" />
-      <CheckBox Content="Ansible" IsChecked="{Binding ShowAnsible}" />
+      <CheckBox Content="MoldPlan Center" IsChecked="{Binding ShowAnsible}" />
       <Button Content="重新整理" Command="{Binding RefreshAllCommand}" Margin="16,0,0,0" />
-      <Button Content="同步 Ansible"
+      <Button Content="同步 MoldPlan Center"
               Command="{Binding SyncAnsibleCommand}"
               IsEnabled="{Binding CanSyncAnsible}"
-              ToolTip.Tip="請先至「設定」填入 deploy-ansible Repo 路徑" />
+              ToolTip.Tip="請先至「設定」填入 MoldPlan Center Repo 路徑" />
     </StackPanel>
 
     <!-- 底部：狀態列與操作按鈕 -->

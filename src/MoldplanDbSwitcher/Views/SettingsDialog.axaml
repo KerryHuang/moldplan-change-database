@@ -16,13 +16,13 @@
     </StackPanel>
 
     <StackPanel Spacing="12">
-      <TextBlock Text="Ansible 連線設定" FontWeight="Bold" FontSize="14" />
+      <TextBlock Text="MoldPlan Center 連線設定" FontWeight="Bold" FontSize="14" />
 
       <StackPanel Spacing="4">
-        <TextBlock Text="deploy-ansible Repo 路徑：" />
+        <TextBlock Text="MoldPlan Center Repo 路徑：" />
         <DockPanel>
           <Button DockPanel.Dock="Right" Content="瀏覽..." Click="OnBrowseRepoClick" Margin="8,0,0,0" />
-          <TextBox x:Name="AnsibleRepoPathBox" Watermark="例：/Users/alice/repos/deploy-ansible" />
+          <TextBox x:Name="AnsibleRepoPathBox" Watermark="例：/Users/alice/repos/moldplan-center" />
         </DockPanel>
       </StackPanel>
 
