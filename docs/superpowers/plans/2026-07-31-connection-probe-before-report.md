@@ -536,12 +536,25 @@ Expected: FAIL — 編譯錯誤 `CS1729`，`ConnectionSwitchDocumentViewModel` �
 
             var progress = new Progress<string>(msg => ProgressText = msg);
 
-            var probe = await _connectionProbe.ProbeAsync(profiles, progress);
-            if (probe.Reachable.Count == 0)
-            {
-                StatusMessage = $"所有連線都無法連線：{string.Join(", ", probe.Unreachable)}";
-                return;
-            }
+            var probe = await ProbeOrAbortAsync(profiles, progress);
+            if (probe is null) return;
+```
+
+預檢邏輯抽成私有 helper，兩個匯出各呼叫一次。加在 `FilterConnectionsForReport` 方法附近：
+
+```csharp
+    /// <summary>預檢連線。全數不通時設定狀態訊息並回傳 null，呼叫端據此中止。</summary>
+    private async Task<ConnectionProbeResult?> ProbeOrAbortAsync(
+        IReadOnlyList<ConnectionProfile> profiles, IProgress<string> progress)
+    {
+        var probe = await _connectionProbe.ProbeAsync(profiles, progress);
+        if (probe.Reachable.Count == 0)
+        {
+            StatusMessage = $"所有連線都無法連線：{string.Join(", ", probe.Unreachable)}";
+            return null;
+        }
+        return probe;
+    }
 ```
 
 接著把該方法中傳給報表服務的 `profiles` 改為 `probe.Reachable`：
