@@ -88,7 +88,7 @@
                 GridLinesVisibility="Horizontal"
                 CanUserResizeColumns="True">
         <DataGrid.Columns>
-          <DataGridTextColumn Header="來源" Binding="{Binding Source}" Width="80" />
+          <DataGridTextColumn Header="來源" Binding="{Binding Source}" Width="120" />
           <DataGridTextColumn Header="環境" Width="90"
                               Binding="{Binding Environment, Converter={StaticResource DatabaseEnvironmentDisplayConverter}}" />
           <DataGridTextColumn Header="名稱" Binding="{Binding Name}" Width="*" />

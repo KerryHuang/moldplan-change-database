@@ -42,7 +42,7 @@ public partial class SettingsDialog : Window
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "選擇 deploy-ansible 目錄",
+            Title = "選擇 MoldPlan Center 目錄",
             AllowMultiple = false
         });
         if (folders.Count > 0)

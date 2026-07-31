@@ -76,7 +76,7 @@ public class AnsibleSyncServiceTests : IDisposable
             """);
 
         var sut = CreateSut(_repoRoot);
-        var profiles = await sut.SyncAsync();
+        var profiles = (await sut.SyncAsync()).Profiles;
 
         var prod = profiles.FirstOrDefault(p => p.Name.Contains("正式"));
         Assert.NotNull(prod);
@@ -114,9 +114,9 @@ public class AnsibleSyncServiceTests : IDisposable
             """);
 
         var sut = CreateSut(_repoRoot);
-        var profiles = await sut.SyncAsync();
+        var profiles = (await sut.SyncAsync()).Profiles;
 
-        var staging = profiles.FirstOrDefault(p => p.Name.Contains("測試"));
+        var staging = profiles.FirstOrDefault(p => p.Name.Contains("預備"));
         Assert.NotNull(staging);
         Assert.Equal("100.73.36.124", staging.Server);
         Assert.Equal("waydo-test", staging.Database);
@@ -132,7 +132,7 @@ public class AnsibleSyncServiceTests : IDisposable
         appSettingsService.Load().Returns(settings);
         var sut = new AnsibleSyncService(appSettingsService);
 
-        var profiles = await sut.SyncAsync();
+        var profiles = (await sut.SyncAsync()).Profiles;
 
         Assert.Empty(profiles);
     }
@@ -142,7 +142,7 @@ public class AnsibleSyncServiceTests : IDisposable
     {
         // repoRoot exists but has no hosts.yml
         var sut = CreateSut(_repoRoot);
-        var profiles = await sut.SyncAsync();
+        var profiles = (await sut.SyncAsync()).Profiles;
 
         Assert.Empty(profiles);
     }
@@ -165,9 +165,10 @@ public class AnsibleSyncServiceTests : IDisposable
         // No database.yml for customer_nodbco_production
 
         var sut = CreateSut(_repoRoot);
-        var profiles = await sut.SyncAsync();
+        var result = await sut.SyncAsync();
 
-        Assert.Empty(profiles);
+        Assert.Empty(result.Profiles);
+        Assert.Contains("nodbco-production", result.SkippedEntries);
     }
 
     [Fact]
@@ -202,7 +203,7 @@ public class AnsibleSyncServiceTests : IDisposable
             """);
 
         var sut = CreateSut(_repoRoot);
-        var profiles = await sut.SyncAsync();
+        var profiles = (await sut.SyncAsync()).Profiles;
 
         var prod = profiles.FirstOrDefault(p => p.Name.Contains("正式"));
         Assert.NotNull(prod);
@@ -233,9 +234,9 @@ public class AnsibleSyncServiceTests : IDisposable
             """);
 
         var sut = CreateSut(_repoRoot);
-        var profiles = await sut.SyncAsync();
+        var profiles = (await sut.SyncAsync()).Profiles;
 
-        var staging = profiles.FirstOrDefault(p => p.Name.Contains("測試"));
+        var staging = profiles.FirstOrDefault(p => p.Name.Contains("預備"));
         Assert.NotNull(staging);
         Assert.Equal("gmaco-staging", staging.Database);
     }
@@ -262,7 +263,7 @@ public class AnsibleSyncServiceTests : IDisposable
             """);
 
         var sut = CreateSut(_repoRoot);
-        var profiles = await sut.SyncAsync();
+        var profiles = (await sut.SyncAsync()).Profiles;
 
         var prod = profiles.FirstOrDefault();
         Assert.NotNull(prod);
@@ -297,7 +298,7 @@ public class AnsibleSyncServiceTests : IDisposable
             """);
 
         var sut = CreateSut(_repoRoot);
-        var profiles = await sut.SyncAsync();
+        var profiles = (await sut.SyncAsync()).Profiles;
 
         var prod = profiles.FirstOrDefault();
         Assert.NotNull(prod);
@@ -327,9 +328,10 @@ public class AnsibleSyncServiceTests : IDisposable
             """);
 
         var sut = CreateSut(_repoRoot);
-        var profiles = await sut.SyncAsync();
+        var result = await sut.SyncAsync();
 
-        Assert.Empty(profiles);
+        Assert.Empty(result.Profiles);
+        Assert.Contains("onboarding-production", result.SkippedEntries);
     }
 
     [Fact]
@@ -362,10 +364,132 @@ public class AnsibleSyncServiceTests : IDisposable
             """);
 
         var sut = CreateSut(_repoRoot);
-        var profiles = await sut.SyncAsync();
+        var profiles = (await sut.SyncAsync()).Profiles;
 
         var staging = profiles.FirstOrDefault();
         Assert.NotNull(staging);
         Assert.Equal("env_password", staging.Password);
+    }
+
+    [Fact]
+    public async Task SyncAsync_StagingEnv_SetsEnvironmentToStagingAndNameSuffixIsPreparatory()
+    {
+        WriteHostsYml("""
+            all:
+              children:
+                customer_gma:
+                  hosts:
+                    gma-staging:
+                      env: staging
+                  vars:
+                    mssql_host: 192.168.1.60
+                    tailscale_ip: 100.6.6.6
+                    customer: gma
+            """);
+
+        WriteFile("customer_gma_staging/database.yml", """
+            main_sql_override:
+              database: "gma-staging-db"
+            """);
+
+        var sut = CreateSut(_repoRoot);
+        var profiles = (await sut.SyncAsync()).Profiles;
+
+        var staging = profiles.FirstOrDefault();
+        Assert.NotNull(staging);
+        Assert.Equal(DatabaseEnvironment.Staging, staging.Environment);
+        Assert.EndsWith("- 預備", staging.Name);
+    }
+
+    [Fact]
+    public async Task SyncAsync_PartialByEnvMap_MissingProdKey_OnlyStagingProducedAndProdSkipped()
+    {
+        // 真實形狀：customer_waydosoft01/02 的 main_sql_database_by_env 只有 staging，沒有 prod
+        WriteHostsYml("""
+            all:
+              children:
+                customers:
+                  children:
+                    customer_waydosoft01:
+                      hosts:
+                        waydosoft01-production:
+                          env: production
+                        waydosoft01-staging:
+                          env: staging
+                      vars:
+                        mssql_host: 192.168.1.70
+                        customer: waydosoft01
+            """);
+
+        WriteFile("customer_waydosoft01/database.yml", """
+            main_sql_database_by_env:
+              staging: "waydosoft01-staging-db"
+            """);
+
+        var sut = CreateSut(_repoRoot);
+        var result = await sut.SyncAsync();
+
+        Assert.Single(result.Profiles);
+        Assert.Equal("waydosoft01-staging-db", result.Profiles[0].Database);
+        Assert.Contains("waydosoft01-production", result.SkippedEntries);
+    }
+
+    [Fact]
+    public async Task SyncAsync_CustomerLevelByEnv_WinsOverHostsLevelByEnv()
+    {
+        // customer 層 group_vars 的 database.yml 與 hosts.yml group vars 同時定義
+        // main_sql_database_by_env 時，customer 層（tier2）應優先於 hosts.yml（tier3）。
+        WriteHostsYml("""
+            all:
+              children:
+                customers:
+                  children:
+                    customer_tierco:
+                      hosts:
+                        tierco-production:
+                          env: production
+                      vars:
+                        mssql_host: 192.168.1.80
+                        customer: tierco
+                        main_sql_database_by_env:
+                          prod: "from-hosts-level"
+            """);
+
+        WriteFile("customer_tierco/database.yml", """
+            main_sql_database_by_env:
+              prod: "from-customer-level"
+            """);
+
+        var sut = CreateSut(_repoRoot);
+        var profiles = (await sut.SyncAsync()).Profiles;
+
+        var prod = profiles.FirstOrDefault();
+        Assert.NotNull(prod);
+        Assert.Equal("from-customer-level", prod.Database);
+    }
+
+    [Fact]
+    public async Task SyncAsync_ByEnvIsStringNotMap_SkipsCustomerWithoutThrowing()
+    {
+        WriteHostsYml("""
+            all:
+              children:
+                customers:
+                  children:
+                    customer_badtype:
+                      hosts:
+                        badtype-production:
+                          env: production
+                      vars:
+                        mssql_host: 192.168.1.90
+                        customer: badtype
+                        main_sql_database_by_env: "not-a-map"
+            """);
+
+        var sut = CreateSut(_repoRoot);
+        var result = await sut.SyncAsync();
+
+        Assert.Empty(result.Profiles);
+        Assert.Contains("badtype-production", result.SkippedEntries);
     }
 }

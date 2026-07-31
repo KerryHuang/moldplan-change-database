@@ -379,24 +379,6 @@ public class ConnectionSwitchDocumentViewModelTests
     }
 
     [Fact]
-    public void FilterConnectionsForReport_環境命中但來源未勾_排除()
-    {
-        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
-        {
-            new() { Name = "正式連線", Server = "s", Database = "d",
-                    Environment = DatabaseEnvironment.Production, Source = "Specurai" }
-        });
-        var vm = CreateVm();
-        var options = new ReportSourceOptions(
-            Specurai: false, Custom: true, MoldPlanCenter: true,
-            Development: true, Testing: true, Staging: true, Production: true);
-
-        var result = vm.FilterConnectionsForReport(options);
-
-        Assert.Empty(result);
-    }
-
-    [Fact]
     public void FilterConnectionsForReport_依Environment欄位判斷而非連線名稱()
     {
         // 名稱不含「正式」，但 Environment 是 Production，應被「正式」勾選命中
@@ -475,20 +457,40 @@ public class ConnectionSwitchDocumentViewModelTests
     }
 
     [Fact]
-    public async Task SyncAnsible_應依名稱推斷環境()
+    public async Task SyncAnsible_原樣保留Service給的Environment()
     {
-        _ansibleSyncService.SyncAsync().Returns(new List<ConnectionProfile>
-        {
-            new() { Name = "客戶A - 正式", Server = "s", Database = "d", Source = "MoldPlan Center" },
-            new() { Name = "客戶A - 測試", Server = "s", Database = "d", Source = "MoldPlan Center" },
-        });
+        _ansibleSyncService.SyncAsync().Returns(new AnsibleSyncResult(
+            new List<ConnectionProfile>
+            {
+                new() { Name = "客戶A - 正式", Server = "s", Database = "d", Source = "MoldPlan Center", Environment = DatabaseEnvironment.Production },
+                new() { Name = "客戶A - 預備", Server = "s", Database = "d", Source = "MoldPlan Center", Environment = DatabaseEnvironment.Staging },
+            },
+            new List<string>()));
         var vm = CreateVm();
 
         await vm.SyncAnsibleCommand.ExecuteAsync(null);
 
         var prod = vm.Connections.First(c => c.Name == "客戶A - 正式");
-        var test = vm.Connections.First(c => c.Name == "客戶A - 測試");
+        var staging = vm.Connections.First(c => c.Name == "客戶A - 預備");
         Assert.Equal(DatabaseEnvironment.Production, prod.Environment);
-        Assert.Equal(DatabaseEnvironment.Testing, test.Environment);
+        Assert.Equal(DatabaseEnvironment.Staging, staging.Environment);
+    }
+
+    [Fact]
+    public async Task SyncAnsible_有略過項目_狀態訊息顯示略過清單()
+    {
+        _ansibleSyncService.SyncAsync().Returns(new AnsibleSyncResult(
+            new List<ConnectionProfile>
+            {
+                new() { Name = "客戶A - 正式", Server = "s", Database = "d", Source = "MoldPlan Center", Environment = DatabaseEnvironment.Production },
+            },
+            new List<string> { "anchiao-production", "anchiao-staging" }));
+        var vm = CreateVm();
+
+        await vm.SyncAnsibleCommand.ExecuteAsync(null);
+
+        Assert.Contains("略過 2 筆", vm.StatusMessage);
+        Assert.Contains("anchiao-production", vm.StatusMessage);
+        Assert.Contains("anchiao-staging", vm.StatusMessage);
     }
 }

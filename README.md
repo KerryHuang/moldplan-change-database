@@ -84,7 +84,7 @@ app,my-database,192.168.1.100,XXX,1
 |------|------|------|
 | Specurai | `%AppData%/Specurai/connections.json` | 與 DatabaseDescriptionApp 共用（唯讀） |
 | 自訂 | `%AppData%/MoldplanDbSwitcher/connections.json` | 本應用程式管理 |
-| Ansible | `deploy-ansible` repo（需在「設定」指定路徑） | 從 Ansible vault 解密讀取，需 `~/.ansible-vault-pass` |
+| MoldPlan Center | `deploy-ansible` repo（需在「設定」指定路徑） | 從 Ansible vault 解密讀取，需 `~/.ansible-vault-pass` |
 
 Specurai 端標記為停用的連線不會列入可切換清單，停用只能在 Specurai 的連線設定畫面操作。
 
@@ -94,7 +94,7 @@ Specurai 端標記為停用的連線不會列入可切換清單，停用只能�
 
 | 設定 | 用途 |
 |------|------|
-| `AnsibleRepoPath` | deploy-ansible Repo 路徑（同步 Ansible 連線用） |
+| `AnsibleRepoPath` | MoldPlan Center Repo 路徑（同步 MoldPlan Center 連線用） |
 | `VaultPasswordFile` | Ansible Vault 密碼檔（預設 `~/.ansible-vault-pass`） |
 | `DevDirectory` | 「套用開發設定」掃描根目錄 |
 | `ReportingScriptsOverridePath` | Reporting 部署腳本覆寫資料夾（留空＝用 App 內嵌腳本；源頭 repo：`gitlab.com/wdmis/waydosoft.moldplan.docs`） |

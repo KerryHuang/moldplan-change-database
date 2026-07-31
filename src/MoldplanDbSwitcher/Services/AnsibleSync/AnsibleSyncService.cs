@@ -21,25 +21,26 @@ public class AnsibleSyncService : IAnsibleSyncService
         _appSettingsService = appSettingsService;
     }
 
-    public async Task<List<ConnectionProfile>> SyncAsync()
+    public async Task<AnsibleSyncResult> SyncAsync()
     {
         var settings = _appSettingsService.Load();
         if (string.IsNullOrWhiteSpace(settings.AnsibleRepoPath))
-            return [];
+            return new AnsibleSyncResult([], []);
 
         var inventoryDir = Path.Combine(
             settings.AnsibleRepoPath, "ansible", "customer", "inventory");
 
         if (!Directory.Exists(inventoryDir))
-            return [];
+            return new AnsibleSyncResult([], []);
 
         var hostsFile = Path.Combine(inventoryDir, "hosts.yml");
         if (!File.Exists(hostsFile))
-            return [];
+            return new AnsibleSyncResult([], []);
 
         var groupVarsDir = Path.Combine(inventoryDir, "group_vars");
         var customers = ParseCustomers(hostsFile);
         var profiles = new List<ConnectionProfile>();
+        var skippedEntries = new List<string>();
 
         foreach (var customer in customers)
         {
@@ -49,10 +50,12 @@ public class AnsibleSyncService : IAnsibleSyncService
                     customer, env, groupVarsDir, settings.VaultPasswordFile);
                 if (profile != null)
                     profiles.Add(profile);
+                else
+                    skippedEntries.Add($"{customer.CustomerName}-{env}");
             }
         }
 
-        return profiles;
+        return new AnsibleSyncResult(profiles, skippedEntries);
     }
 
     private List<CustomerInfo> ParseCustomers(string hostsFile)
@@ -151,7 +154,7 @@ public class AnsibleSyncService : IAnsibleSyncService
     private async Task<ConnectionProfile?> BuildProfileAsync(
         CustomerInfo customer, string env, string groupVarsDir, string vaultPasswordFile)
     {
-        var envTag = env == "production" ? "prod" : env;
+        var envTag = env is "dev" or "staging" ? env : "prod";
 
         // 優先序：env 層的 main_sql_override.database
         //       → customer 層 group_vars 的 main_sql_database_by_env[envTag]
@@ -185,7 +188,22 @@ public class AnsibleSyncService : IAnsibleSyncService
                 "vault_db_admin_password",
                 "vault_db_password");
 
-        var envLabel = env == "production" ? "正式" : "測試";
+        var environment = envTag switch
+        {
+            "prod" => DatabaseEnvironment.Production,
+            "staging" => DatabaseEnvironment.Staging,
+            "dev" => DatabaseEnvironment.Development,
+            _ => DatabaseEnvironment.Staging
+        };
+
+        var envLabel = envTag switch
+        {
+            "prod" => "正式",
+            "staging" => "預備",
+            "dev" => "開發",
+            _ => "預備"
+        };
+
         var displayName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(customer.CustomerName);
 
         return new ConnectionProfile
@@ -196,7 +214,8 @@ public class AnsibleSyncService : IAnsibleSyncService
             AuthType = AuthenticationType.SqlServerAuthentication,
             Username = username,
             Password = password,
-            Source = "MoldPlan Center"
+            Source = "MoldPlan Center",
+            Environment = environment
         };
     }
 
@@ -235,7 +254,8 @@ public class AnsibleSyncService : IAnsibleSyncService
             overrideObj is Dictionary<object, object> overrideDict &&
             overrideDict.TryGetValue("database", out var db))
         {
-            return db?.ToString();
+            var s = db?.ToString();
+            return string.IsNullOrWhiteSpace(s) ? null : s;
         }
         return null;
     }

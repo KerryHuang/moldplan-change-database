@@ -158,11 +158,13 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
         StatusMessage = "正在從 MoldPlan Center 同步連線...";
         try
         {
-            _ansibleConnections = await _ansibleSyncService.SyncAsync();
-            foreach (var p in _ansibleConnections)
-                p.Environment = DatabaseEnvironmentInference.FromName(p.Name);
+            var result = await _ansibleSyncService.SyncAsync();
+            _ansibleConnections = result.Profiles;
             LoadConnections();
-            StatusMessage = $"已同步 {_ansibleConnections.Count} 個 MoldPlan Center 連線";
+            StatusMessage = result.SkippedEntries.Count == 0
+                ? $"已同步 {result.Profiles.Count} 個 MoldPlan Center 連線"
+                : $"已同步 {result.Profiles.Count} 個 MoldPlan Center 連線"
+                  + $"（略過 {result.SkippedEntries.Count} 筆：{string.Join(", ", result.SkippedEntries)}）";
         }
         catch (Exception ex)
         {
@@ -301,7 +303,7 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
             var profiles = FilterConnectionsForReport(sourceOptions);
             if (profiles.Count == 0)
             {
-                StatusMessage = "未選擇任何連線來源";
+                StatusMessage = "沒有符合條件的連線";
                 return;
             }
 
@@ -363,7 +365,7 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
             var profiles = FilterConnectionsForReport(sourceOptions);
             if (profiles.Count == 0)
             {
-                StatusMessage = "未選擇任何連線來源";
+                StatusMessage = "沒有符合條件的連線";
                 return;
             }
 
