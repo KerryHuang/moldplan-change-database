@@ -454,14 +454,29 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
     public ReportSourceOptions GetAvailableSources() => new(
         Specurai: Connections.Any(c => c.Source == "Specurai"),
         Custom: Connections.Any(c => c.Source == "Custom"),
-        AnsibleProduction: Connections.Any(c => c.Source == "MoldPlan Center" && c.Name.EndsWith("- 正式")),
-        AnsibleStaging: Connections.Any(c => c.Source == "MoldPlan Center" && c.Name.EndsWith("- 測試")));
+        MoldPlanCenter: Connections.Any(c => c.Source == "MoldPlan Center"),
+        Development: Connections.Any(c => c.Environment == DatabaseEnvironment.Development),
+        Testing: Connections.Any(c => c.Environment == DatabaseEnvironment.Testing),
+        Staging: Connections.Any(c => c.Environment == DatabaseEnvironment.Staging),
+        Production: Connections.Any(c => c.Environment == DatabaseEnvironment.Production));
 
     public IReadOnlyList<ConnectionProfile> FilterConnectionsForReport(ReportSourceOptions options)
-        => Connections.Where(c =>
-            (options.Specurai && c.Source == "Specurai") ||
-            (options.Custom && c.Source == "Custom") ||
-            (options.AnsibleProduction && c.Source == "MoldPlan Center" && c.Name.EndsWith("- 正式")) ||
-            (options.AnsibleStaging && c.Source == "MoldPlan Center" && c.Name.EndsWith("- 測試"))
-        ).ToList();
+        => Connections.Where(c => MatchesSource(c, options) && MatchesEnvironment(c, options)).ToList();
+
+    private static bool MatchesSource(ConnectionProfile c, ReportSourceOptions o) => c.Source switch
+    {
+        "Specurai" => o.Specurai,
+        "Custom" => o.Custom,
+        "MoldPlan Center" => o.MoldPlanCenter,
+        _ => false
+    };
+
+    private static bool MatchesEnvironment(ConnectionProfile c, ReportSourceOptions o) => c.Environment switch
+    {
+        DatabaseEnvironment.Development => o.Development,
+        DatabaseEnvironment.Testing => o.Testing,
+        DatabaseEnvironment.Staging => o.Staging,
+        DatabaseEnvironment.Production => o.Production,
+        _ => false
+    };
 }

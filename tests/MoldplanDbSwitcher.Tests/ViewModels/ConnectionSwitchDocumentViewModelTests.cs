@@ -338,7 +338,9 @@ public class ConnectionSwitchDocumentViewModelTests
     public void FilterConnectionsForReport_SpecuraiOnly_ReturnsOnlySpecurai()
     {
         var vm = CreateVm();
-        var options = new ReportSourceOptions(Specurai: true, Custom: false, AnsibleProduction: false, AnsibleStaging: false);
+        var options = new ReportSourceOptions(
+            Specurai: true, Custom: false, MoldPlanCenter: false,
+            Development: true, Testing: true, Staging: true, Production: true);
 
         var result = vm.FilterConnectionsForReport(options);
 
@@ -349,11 +351,87 @@ public class ConnectionSwitchDocumentViewModelTests
     public void FilterConnectionsForReport_NoneSelected_ReturnsEmpty()
     {
         var vm = CreateVm();
-        var options = new ReportSourceOptions(Specurai: false, Custom: false, AnsibleProduction: false, AnsibleStaging: false);
+        var options = new ReportSourceOptions(
+            Specurai: false, Custom: false, MoldPlanCenter: false,
+            Development: false, Testing: false, Staging: false, Production: false);
 
         var result = vm.FilterConnectionsForReport(options);
 
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public void FilterConnectionsForReport_來源命中但環境未勾_排除()
+    {
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "預備連線", Server = "s", Database = "d",
+                    Environment = DatabaseEnvironment.Staging, Source = "Specurai" }
+        });
+        var vm = CreateVm();
+        var options = new ReportSourceOptions(
+            Specurai: true, Custom: false, MoldPlanCenter: false,
+            Development: false, Testing: true, Staging: false, Production: true);
+
+        var result = vm.FilterConnectionsForReport(options);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void FilterConnectionsForReport_環境命中但來源未勾_排除()
+    {
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "正式連線", Server = "s", Database = "d",
+                    Environment = DatabaseEnvironment.Production, Source = "Specurai" }
+        });
+        var vm = CreateVm();
+        var options = new ReportSourceOptions(
+            Specurai: false, Custom: true, MoldPlanCenter: true,
+            Development: true, Testing: true, Staging: true, Production: true);
+
+        var result = vm.FilterConnectionsForReport(options);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void FilterConnectionsForReport_依Environment欄位判斷而非連線名稱()
+    {
+        // 名稱不含「正式」，但 Environment 是 Production，應被「正式」勾選命中
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "GMA-Prod", Server = "s", Database = "d",
+                    Environment = DatabaseEnvironment.Production, Source = "Specurai" }
+        });
+        var vm = CreateVm();
+        var options = new ReportSourceOptions(
+            Specurai: true, Custom: false, MoldPlanCenter: false,
+            Development: false, Testing: false, Staging: false, Production: true);
+
+        var result = vm.FilterConnectionsForReport(options);
+
+        Assert.Single(result);
+        Assert.Equal("GMA-Prod", result[0].Name);
+    }
+
+    [Fact]
+    public void GetAvailableSources_無開發環境連線_Development為false()
+    {
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "測試連線", Server = "s", Database = "d",
+                    Environment = DatabaseEnvironment.Testing, Source = "Specurai" }
+        });
+        var vm = CreateVm();
+
+        var available = vm.GetAvailableSources();
+
+        Assert.False(available.Development);
+        Assert.True(available.Testing);
+        Assert.False(available.Staging);
+        Assert.False(available.Production);
     }
 
     [Fact]
