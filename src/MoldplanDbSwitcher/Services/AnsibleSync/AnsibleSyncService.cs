@@ -113,7 +113,9 @@ public class AnsibleSyncService : IAnsibleSyncService
                     CustomerName = customerName,
                     MssqlHost = mssqlHost,
                     TailscaleIp = tailscaleIp,
-                    Environments = environments.Distinct().ToList()
+                    Environments = environments.Distinct().ToList(),
+                    DatabaseByEnv = ExtractDatabaseByEnv(
+                        vars?.GetValueOrDefault("main_sql_database_by_env"))
                 });
             }
         }
@@ -149,20 +151,19 @@ public class AnsibleSyncService : IAnsibleSyncService
     private async Task<ConnectionProfile?> BuildProfileAsync(
         CustomerInfo customer, string env, string groupVarsDir, string vaultPasswordFile)
     {
-        var envGroup = $"customer_{customer.CustomerName}_{env}";
-        var dbYmlPath = Path.Combine(groupVarsDir, envGroup, "database.yml");
-        string? database = null;
+        var envTag = env == "production" ? "prod" : env;
 
-        if (File.Exists(dbYmlPath))
-        {
-            try
-            {
-                var dbYml = YamlDeserializer.Deserialize<Dictionary<string, object>>(
-                    await File.ReadAllTextAsync(dbYmlPath));
-                database = ExtractMainDatabase(dbYml);
-            }
-            catch { /* 解析失敗跳過 */ }
-        }
+        // 優先序：env 層的 main_sql_override.database
+        //       → customer 層 group_vars 的 main_sql_database_by_env[envTag]
+        //       → hosts.yml group vars 的 main_sql_database_by_env[envTag]
+        var database =
+            ExtractMainDatabase(await LoadYamlAsync(
+                groupVarsDir, $"customer_{customer.CustomerName}_{env}"))
+            ?? ExtractDatabaseByEnv(
+                    (await LoadYamlAsync(groupVarsDir, $"customer_{customer.CustomerName}"))
+                        ?.GetValueOrDefault("main_sql_database_by_env"))
+                .GetValueOrDefault(envTag)
+            ?? customer.DatabaseByEnv.GetValueOrDefault(envTag);
 
         if (string.IsNullOrEmpty(database))
             return null;
@@ -195,13 +196,42 @@ public class AnsibleSyncService : IAnsibleSyncService
             AuthType = AuthenticationType.SqlServerAuthentication,
             Username = username,
             Password = password,
-            Source = "Ansible"
+            Source = "MoldPlan Center"
         };
     }
 
-    private static string? ExtractMainDatabase(Dictionary<string, object> dbYml)
+    /// <summary>讀取 group_vars/&lt;group&gt;/database.yml，不存在或解析失敗回傳 null。</summary>
+    private static async Task<Dictionary<string, object>?> LoadYamlAsync(string groupVarsDir, string group)
     {
-        if (dbYml.TryGetValue("main_sql_override", out var overrideObj) &&
+        var path = Path.Combine(groupVarsDir, group, "database.yml");
+        if (!File.Exists(path)) return null;
+
+        try
+        {
+            return YamlDeserializer.Deserialize<Dictionary<string, object>>(
+                await File.ReadAllTextAsync(path));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>把 main_sql_database_by_env 的 YAML 節點轉成 envTag → 資料庫名稱。</summary>
+    private static Dictionary<string, string> ExtractDatabaseByEnv(object? byEnvObj)
+    {
+        if (byEnvObj is not Dictionary<object, object> byEnv)
+            return [];
+
+        return byEnv
+            .Where(kv => kv.Value is not null)
+            .ToDictionary(kv => kv.Key.ToString()!, kv => kv.Value.ToString()!);
+    }
+
+    private static string? ExtractMainDatabase(Dictionary<string, object>? dbYml)
+    {
+        if (dbYml is not null &&
+            dbYml.TryGetValue("main_sql_override", out var overrideObj) &&
             overrideObj is Dictionary<object, object> overrideDict &&
             overrideDict.TryGetValue("database", out var db))
         {
@@ -273,5 +303,6 @@ public class AnsibleSyncService : IAnsibleSyncService
         public string MssqlHost { get; set; } = string.Empty;
         public string TailscaleIp { get; set; } = string.Empty;
         public List<string> Environments { get; set; } = [];
+        public Dictionary<string, string> DatabaseByEnv { get; set; } = [];
     }
 }

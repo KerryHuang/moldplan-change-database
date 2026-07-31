@@ -84,7 +84,7 @@ public class AnsibleSyncServiceTests : IDisposable
         Assert.Equal("testcoDB", prod.Database);
         Assert.Equal("mis", prod.Username);
         Assert.Equal("prodpass123", prod.Password);
-        Assert.Equal("Ansible", prod.Source);
+        Assert.Equal("MoldPlan Center", prod.Source);
         Assert.Equal(AuthenticationType.SqlServerAuthentication, prod.AuthType);
     }
 
@@ -163,6 +163,168 @@ public class AnsibleSyncServiceTests : IDisposable
                     customer: nodbco
             """);
         // No database.yml for customer_nodbco_production
+
+        var sut = CreateSut(_repoRoot);
+        var profiles = await sut.SyncAsync();
+
+        Assert.Empty(profiles);
+    }
+
+    [Fact]
+    public async Task SyncAsync_DatabaseByEnv_ProductionUsesProdKey()
+    {
+        WriteHostsYml("""
+            all:
+              children:
+                customers:
+                  children:
+                    customer_gmaco:
+                      hosts:
+                        gmaco-production:
+                          env: production
+                        gmaco-staging:
+                          env: staging
+                      vars:
+                        mssql_host: 192.168.1.250
+                        customer: gmaco
+            """);
+
+        WriteFile("customer_gmaco/database.yml", """
+            main_sql_database_by_env:
+              prod: "GMACO"
+              staging: "gmaco-staging"
+            """);
+
+        WriteFile("customer_gmaco_production/database.yml", """
+            main_sql_override:
+              username: "{{ sql.admin.username }}"
+              password: "{{ vault_db_main_password }}"
+            """);
+
+        var sut = CreateSut(_repoRoot);
+        var profiles = await sut.SyncAsync();
+
+        var prod = profiles.FirstOrDefault(p => p.Name.Contains("正式"));
+        Assert.NotNull(prod);
+        Assert.Equal("GMACO", prod.Database);
+    }
+
+    [Fact]
+    public async Task SyncAsync_DatabaseByEnv_StagingUsesStagingKey()
+    {
+        WriteHostsYml("""
+            all:
+              children:
+                customers:
+                  children:
+                    customer_gmaco:
+                      hosts:
+                        gmaco-staging:
+                          env: staging
+                      vars:
+                        mssql_host: 192.168.1.250
+                        customer: gmaco
+            """);
+
+        WriteFile("customer_gmaco/database.yml", """
+            main_sql_database_by_env:
+              prod: "GMACO"
+              staging: "gmaco-staging"
+            """);
+
+        var sut = CreateSut(_repoRoot);
+        var profiles = await sut.SyncAsync();
+
+        var staging = profiles.FirstOrDefault(p => p.Name.Contains("測試"));
+        Assert.NotNull(staging);
+        Assert.Equal("gmaco-staging", staging.Database);
+    }
+
+    [Fact]
+    public async Task SyncAsync_DatabaseByEnvInHostsYml_IsUsed()
+    {
+        // jiathai 案例：by_env 直接定義在 hosts.yml 的 group vars
+        WriteHostsYml("""
+            all:
+              children:
+                customers:
+                  children:
+                    customer_jiaco:
+                      hosts:
+                        jiaco-production:
+                          env: production
+                      vars:
+                        mssql_host: 192.168.1.14
+                        customer: jiaco
+                        main_sql_database_by_env:
+                          staging: JIACO-Staging
+                          prod: JIACO
+            """);
+
+        var sut = CreateSut(_repoRoot);
+        var profiles = await sut.SyncAsync();
+
+        var prod = profiles.FirstOrDefault();
+        Assert.NotNull(prod);
+        Assert.Equal("JIACO", prod.Database);
+    }
+
+    [Fact]
+    public async Task SyncAsync_OverrideDatabaseWinsOverByEnv()
+    {
+        WriteHostsYml("""
+            all:
+              children:
+                customers:
+                  children:
+                    customer_winco:
+                      hosts:
+                        winco-production:
+                          env: production
+                      vars:
+                        mssql_host: 192.168.1.90
+                        customer: winco
+            """);
+
+        WriteFile("customer_winco/database.yml", """
+            main_sql_database_by_env:
+              prod: "from-by-env"
+            """);
+
+        WriteFile("customer_winco_production/database.yml", """
+            main_sql_override:
+              database: "from-override"
+            """);
+
+        var sut = CreateSut(_repoRoot);
+        var profiles = await sut.SyncAsync();
+
+        var prod = profiles.FirstOrDefault();
+        Assert.NotNull(prod);
+        Assert.Equal("from-override", prod.Database);
+    }
+
+    [Fact]
+    public async Task SyncAsync_NoDatabaseNameAnywhere_SkipsCustomer()
+    {
+        WriteHostsYml("""
+            all:
+              children:
+                customers:
+                  children:
+                    customer_onboarding:
+                      hosts:
+                        onboarding-production:
+                          env: production
+                      vars:
+                        mssql_host: 192.168.1.10
+                        customer: onboarding
+            """);
+
+        WriteFile("customer_onboarding_production/database.yml", """
+            main_sql_override:
+              username: "{{ sql.admin.username }}"
+            """);
 
         var sut = CreateSut(_repoRoot);
         var profiles = await sut.SyncAsync();
