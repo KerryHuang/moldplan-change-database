@@ -1,5 +1,7 @@
 # MoldplanDbSwitcher 連線環境模式 Implementation Plan
 
+> ⚠ **歷史紀錄（保留作設計過程參考，內文未更新）**。文中關於 `DatabaseEnvironmentInference`（依連線名稱推斷環境）的描述已於 2026-07-31 變更：該類別已刪除，MoldPlan Center 來源的 `Environment` 改由 `AnsibleSyncService` 依 ansible 的 `env_tag` 直接設定（prod→Production、staging→Staging、dev→Development）。現況請見 `docs/superpowers/specs/2026-07-31-report-source-environment-filter-design.md`。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在 MoldplanDbSwitcher 套用與 Specurai 一致的連線環境模式：環境欄位、選擇器統一顯示與排序、Production 防呆。

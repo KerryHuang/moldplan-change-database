@@ -1,5 +1,7 @@
 # MoldplanDbSwitcher 連線環境模式 — 設計規格
 
+> ⚠ **歷史紀錄（保留作設計過程參考，內文未更新）**。文中關於 `DatabaseEnvironmentInference`（依連線名稱推斷環境）的描述已於 2026-07-31 變更：該類別已刪除，MoldPlan Center 來源的 `Environment` 改由 `AnsibleSyncService` 依 ansible 的 `env_tag` 直接設定（prod→Production、staging→Staging、dev→Development）。現況請見 `docs/superpowers/specs/2026-07-31-report-source-environment-filter-design.md`。
+
 - 日期：2026-06-09
 - 狀態：已核准，待實作
 - 對齊來源：DatabaseDescriptionApp（Specurai）的「連線環境欄位 + Production 防呆 + 選擇器統一顯示排序」功能
