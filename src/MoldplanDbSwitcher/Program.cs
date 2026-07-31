@@ -28,6 +28,8 @@ class Program
         services.AddSingleton<IConnectionSourceService, ConnectionSourceService>();
         services.AddSingleton<IServerTxtService, ServerTxtService>();
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
+        services.AddSingleton<IConnectionTester, SqlConnectionTester>();
+        services.AddSingleton<IConnectionProbeService, ConnectionProbeService>();
         services.AddSingleton<IFeatureQueryService, FeatureQueryService>();
         services.AddSingleton<IFeatureReportService, FeatureReportService>();
         services.AddSingleton<IUsageQueryService, UsageQueryService>();

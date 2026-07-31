@@ -25,6 +25,7 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAppSettingsDevService _appSettingsDevService;
     private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly IConnectionProbeService _connectionProbe;
     private readonly IActiveConnectionService _activeConnection;
     private List<ConnectionProfile> _ansibleConnections = [];
 
@@ -103,6 +104,7 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
         IAppSettingsService appSettingsService,
         IAppSettingsDevService appSettingsDevService,
         ISqlConnectionFactory connectionFactory,
+        IConnectionProbeService connectionProbe,
         IActiveConnectionService activeConnection)
     {
         _connectionSource = connectionSource;
@@ -115,6 +117,7 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
         _appSettingsService = appSettingsService;
         _appSettingsDevService = appSettingsDevService;
         _connectionFactory = connectionFactory;
+        _connectionProbe = connectionProbe;
         _activeConnection = activeConnection;
 
         Title = "連線切換";
@@ -308,7 +311,11 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
             }
 
             var progress = new Progress<string>(msg => ProgressText = msg);
-            var data = await _featureReportService.QueryAllCustomerFeaturesAsync(profiles, progress);
+
+            var probe = await ProbeOrAbortAsync(profiles, progress);
+            if (probe is null) return;
+
+            var data = await _featureReportService.QueryAllCustomerFeaturesAsync(probe.Reachable, progress);
 
             if (data.Customers.Count == 0)
             {
@@ -331,6 +338,8 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
                 msg += $"（{data.SkippedConnections.Count} 個連線無資料已跳過：{string.Join(", ", data.SkippedConnections)}）";
             if (data.FailedConnections.Count > 0)
                 msg += $"（{data.FailedConnections.Count} 個連線失敗：{string.Join(", ", data.FailedConnections)}）";
+            if (probe.Unreachable.Count > 0)
+                msg += $"（{probe.Unreachable.Count} 個連線不通已跳過：{string.Join(", ", probe.Unreachable)}）";
             StatusMessage = msg;
         }
         catch (Exception ex)
@@ -370,7 +379,11 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
             }
 
             var progress = new Progress<string>(msg => ProgressText = msg);
-            var data = await _usageReportService.QueryAllAsync(profiles, progress);
+
+            var probe = await ProbeOrAbortAsync(profiles, progress);
+            if (probe is null) return;
+
+            var data = await _usageReportService.QueryAllAsync(probe.Reachable, progress);
 
             if (data.Rows.Count == 0)
             {
@@ -393,6 +406,8 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
                 msg += $"（{data.SkippedConnections.Count} 個連線無資料已跳過：{string.Join(", ", data.SkippedConnections)}）";
             if (data.FailedConnections.Count > 0)
                 msg += $"（{data.FailedConnections.Count} 個連線失敗：{string.Join(", ", data.FailedConnections)}）";
+            if (probe.Unreachable.Count > 0)
+                msg += $"（{probe.Unreachable.Count} 個連線不通已跳過：{string.Join(", ", probe.Unreachable)}）";
             StatusMessage = msg;
         }
         catch (Exception ex)
@@ -464,6 +479,19 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
 
     public IReadOnlyList<ConnectionProfile> FilterConnectionsForReport(ReportSourceOptions options)
         => Connections.Where(c => MatchesSource(c, options) && MatchesEnvironment(c, options)).ToList();
+
+    /// <summary>預檢連線。全數不通時設定狀態訊息並回傳 null，呼叫端據此中止。</summary>
+    private async Task<ConnectionProbeResult?> ProbeOrAbortAsync(
+        IReadOnlyList<ConnectionProfile> profiles, IProgress<string> progress)
+    {
+        var probe = await _connectionProbe.ProbeAsync(profiles, progress);
+        if (probe.Reachable.Count == 0)
+        {
+            StatusMessage = $"所有連線都無法連線：{string.Join(", ", probe.Unreachable)}";
+            return null;
+        }
+        return probe;
+    }
 
     private static bool MatchesSource(ConnectionProfile c, ReportSourceOptions o) => c.Source switch
     {

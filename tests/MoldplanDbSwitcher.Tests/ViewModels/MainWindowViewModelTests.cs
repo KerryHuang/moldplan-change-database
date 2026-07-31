@@ -22,6 +22,7 @@ public class MainWindowViewModelTests
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAppSettingsDevService _appSettingsDevService;
     private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly IConnectionProbeService _connectionProbe;
     private readonly IActiveConnectionService _activeConnection;
     private readonly IUpdateCheckService _updateCheckService;
 
@@ -40,6 +41,11 @@ public class MainWindowViewModelTests
         _connectionFactory = Substitute.For<ISqlConnectionFactory>();
         _connectionFactory.Create(Arg.Any<ConnectionProfile>()).Returns(
             new SqlConnection("Server=localhost;Database=test;User Id=sa;Password=pass;"));
+        _connectionProbe = Substitute.For<IConnectionProbeService>();
+        _connectionProbe.ProbeAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(),
+                Arg.Any<IProgress<string>>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult(new ConnectionProbeResult(
+                call.Arg<IReadOnlyList<ConnectionProfile>>().ToList(), [])));
         _activeConnection = new ActiveConnectionService();
 
         _updateCheckService = Substitute.For<IUpdateCheckService>();
@@ -58,7 +64,7 @@ public class MainWindowViewModelTests
         _connectionSource, _serverTxtService, _settingsService,
         _featureReportService, _connectionExportService, _usageReportService,
         _ansibleSyncService, _appSettingsService, _appSettingsDevService,
-        _connectionFactory, _activeConnection);
+        _connectionFactory, _connectionProbe, _activeConnection);
 
     private ReportingQueryViewModel CreateQuery() => new(
         _ => Substitute.For<IReportingObjectService>(),

@@ -25,6 +25,7 @@ public class ConnectionSwitchDocumentViewModelTests
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAppSettingsDevService _appSettingsDevService;
     private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly IConnectionProbeService _connectionProbe;
     private readonly IActiveConnectionService _activeConnection;
 
     public ConnectionSwitchDocumentViewModelTests()
@@ -42,6 +43,11 @@ public class ConnectionSwitchDocumentViewModelTests
         _connectionFactory = Substitute.For<ISqlConnectionFactory>();
         _connectionFactory.Create(Arg.Any<ConnectionProfile>()).Returns(
             new SqlConnection("Server=localhost;Database=test;User Id=sa;Password=pass;"));
+        _connectionProbe = Substitute.For<IConnectionProbeService>();
+        _connectionProbe.ProbeAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(),
+                Arg.Any<IProgress<string>>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult(new ConnectionProbeResult(
+                call.Arg<IReadOnlyList<ConnectionProfile>>().ToList(), [])));
         _activeConnection = new ActiveConnectionService();
 
         _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
@@ -56,7 +62,7 @@ public class ConnectionSwitchDocumentViewModelTests
         _connectionSource, _serverTxtService, _settingsService,
         _featureReportService, _connectionExportService, _usageReportService,
         _ansibleSyncService, _appSettingsService, _appSettingsDevService,
-        _connectionFactory, _activeConnection);
+        _connectionFactory, _connectionProbe, _activeConnection);
 
     // ── 原 Create() helper（供保留舊測試使用）────────────────────────────
     private static ConnectionSwitchDocumentViewModel Create(
@@ -83,9 +89,15 @@ public class ConnectionSwitchDocumentViewModelTests
             new SqlConnection("Server=localhost;Database=test;User Id=sa;Password=pass;"));
         active ??= new ActiveConnectionService();
 
+        var probe = Substitute.For<IConnectionProbeService>();
+        probe.ProbeAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(),
+                Arg.Any<IProgress<string>>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult(new ConnectionProbeResult(
+                call.Arg<IReadOnlyList<ConnectionProfile>>().ToList(), [])));
+
         return new ConnectionSwitchDocumentViewModel(
             source, serverTxt, settings, featureReport, export, usage,
-            ansible, appSettings, appDev, factory, active);
+            ansible, appSettings, appDev, factory, probe, active);
     }
 
     // ── 原有測試（shell 重構前已存在）────────────────────────────────────
@@ -125,13 +137,19 @@ public class ConnectionSwitchDocumentViewModelTests
         appSettings.Load().Returns(new AppSettings());
         var appDev = Substitute.For<IAppSettingsDevService>();
 
+        var probe = Substitute.For<IConnectionProbeService>();
+        probe.ProbeAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(),
+                Arg.Any<IProgress<string>>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult(new ConnectionProbeResult(
+                call.Arg<IReadOnlyList<ConnectionProfile>>().ToList(), [])));
+
         var active = new ActiveConnectionService();
         ActiveConnection? pushed = null;
         active.Changed += c => pushed = c;
 
         var vm = new ConnectionSwitchDocumentViewModel(
             source, serverTxt, settings, featureReport, export, usage,
-            ansible, appSettings, appDev, factory, active);
+            ansible, appSettings, appDev, factory, probe, active);
 
         Assert.NotNull(pushed);
         Assert.Equal("DB1", pushed!.Database);
@@ -492,5 +510,54 @@ public class ConnectionSwitchDocumentViewModelTests
         Assert.Contains("略過 2 筆", vm.StatusMessage);
         Assert.Contains("anchiao-production", vm.StatusMessage);
         Assert.Contains("anchiao-staging", vm.StatusMessage);
+    }
+
+    [Fact]
+    public async Task ExportUsageReport_有連線不通_只查詢可連線的()
+    {
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "通", Server = "s", Database = "d", Source = "Specurai" },
+            new() { Name = "不通", Server = "s", Database = "d", Source = "Specurai" },
+        });
+        _connectionProbe.ProbeAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(),
+                Arg.Any<IProgress<string>>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult(new ConnectionProbeResult(
+                call.Arg<IReadOnlyList<ConnectionProfile>>().Where(p => p.Name == "通").ToList(),
+                ["不通"])));
+
+        var reportData = new UsageReportData();
+        reportData.FailedConnections.Add("通");
+        _usageReportService.QueryAllAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(), Arg.Any<IProgress<string>>())
+            .Returns(reportData);
+
+        var vm = CreateVm();
+        vm.ReportSourceCallback = () => Task.FromResult<ReportSourceOptions?>(ReportSourceOptions.AllSelected);
+        vm.SaveUsageReportCallback = () => Task.FromResult<string?>(System.IO.Path.GetTempFileName());
+
+        await vm.ExportUsageReportCommand.ExecuteAsync(null);
+
+        await _usageReportService.Received(1).QueryAllAsync(
+            Arg.Is<IReadOnlyList<ConnectionProfile>>(list =>
+                list.Count == 1 && list[0].Name == "通"),
+            Arg.Any<IProgress<string>>());
+    }
+
+    [Fact]
+    public async Task ExportUsageReport_全部連線不通_不查詢且顯示訊息()
+    {
+        _connectionProbe.ProbeAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(),
+                Arg.Any<IProgress<string>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new ConnectionProbeResult([], ["dev"])));
+
+        var vm = CreateVm();
+        vm.ReportSourceCallback = () => Task.FromResult<ReportSourceOptions?>(ReportSourceOptions.AllSelected);
+        vm.SaveUsageReportCallback = () => Task.FromResult<string?>(System.IO.Path.GetTempFileName());
+
+        await vm.ExportUsageReportCommand.ExecuteAsync(null);
+
+        await _usageReportService.DidNotReceive().QueryAllAsync(
+            Arg.Any<IReadOnlyList<ConnectionProfile>>(), Arg.Any<IProgress<string>>());
+        Assert.Contains("無法連線", vm.StatusMessage);
     }
 }
