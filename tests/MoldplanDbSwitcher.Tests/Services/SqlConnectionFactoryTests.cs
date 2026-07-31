@@ -34,4 +34,26 @@ public class SqlConnectionFactoryTests
         Assert.Contains("User ID=sa", conn.ConnectionString);
         Assert.Contains("Password=secret", conn.ConnectionString);
     }
+
+    [Fact]
+    public void Create_指定ConnectTimeout_連線字串使用該值()
+    {
+        var profile = new ConnectionProfile { Server = "127.0.0.1", Database = "mis" };
+
+        using var conn = _factory.Create(profile, 5);
+
+        var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(conn.ConnectionString);
+        Assert.Equal(5, builder.ConnectTimeout);
+    }
+
+    [Fact]
+    public void Create_未指定ConnectTimeout_維持預設10秒()
+    {
+        var profile = new ConnectionProfile { Server = "127.0.0.1", Database = "mis" };
+
+        using var conn = _factory.Create(profile);
+
+        var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(conn.ConnectionString);
+        Assert.Equal(10, builder.ConnectTimeout);
+    }
 }

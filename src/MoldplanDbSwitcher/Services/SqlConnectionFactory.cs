@@ -5,14 +5,14 @@ namespace MoldplanDbSwitcher.Services;
 
 public class SqlConnectionFactory : ISqlConnectionFactory
 {
-    public SqlConnection Create(ConnectionProfile profile)
+    public SqlConnection Create(ConnectionProfile profile, int? connectTimeoutSeconds = null)
     {
         var builder = new SqlConnectionStringBuilder
         {
             DataSource = profile.Server,
             InitialCatalog = profile.Database,
             TrustServerCertificate = true,
-            ConnectTimeout = 10
+            ConnectTimeout = connectTimeoutSeconds ?? 10
         };
 
         if (profile.AuthType == AuthenticationType.SqlServerAuthentication)

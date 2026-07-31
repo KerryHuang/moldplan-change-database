@@ -5,5 +5,6 @@ namespace MoldplanDbSwitcher.Services;
 
 public interface ISqlConnectionFactory
 {
-    SqlConnection Create(ConnectionProfile profile);
+    /// <summary>建立連線。connectTimeoutSeconds 為 null 時使用預設的 10 秒。</summary>
+    SqlConnection Create(ConnectionProfile profile, int? connectTimeoutSeconds = null);
 }
