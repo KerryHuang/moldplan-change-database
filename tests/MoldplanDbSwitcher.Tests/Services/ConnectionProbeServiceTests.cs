@@ -56,6 +56,28 @@ public class ConnectionProbeServiceTests
     }
 
     [Fact]
+    public async Task ProbeAsync_完成順序與輸入相反_Reachable仍保序()
+    {
+        // 模擬不同延遲：第一個最久、最後一個最快完成
+        // 藉此驗證即使完成順序相反，輸出仍保持輸入順序
+        _tester.CanConnectAsync(Arg.Is<ConnectionProfile>(p => p.Name == "甲"), Arg.Any<CancellationToken>())
+            .Returns(_ => DelayedAsync(40, true));
+        _tester.CanConnectAsync(Arg.Is<ConnectionProfile>(p => p.Name == "乙"), Arg.Any<CancellationToken>())
+            .Returns(_ => DelayedAsync(30, true));
+        _tester.CanConnectAsync(Arg.Is<ConnectionProfile>(p => p.Name == "丙"), Arg.Any<CancellationToken>())
+            .Returns(_ => DelayedAsync(20, true));
+        _tester.CanConnectAsync(Arg.Is<ConnectionProfile>(p => p.Name == "丁"), Arg.Any<CancellationToken>())
+            .Returns(_ => DelayedAsync(10, true));
+        var sut = new ConnectionProbeService(_tester);
+
+        var result = await sut.ProbeAsync([P("甲"), P("乙"), P("丙"), P("丁")]);
+
+        // 即使丁、丙、乙、甲依序完成，輸出仍應維持輸入順序：甲、乙、丙、丁
+        Assert.Equal(new[] { "甲", "乙", "丙", "丁" },
+            result.Reachable.Select(p => p.Name).ToArray());
+    }
+
+    [Fact]
     public async Task ProbeAsync_回報可連線與跳過的數量()
     {
         _tester.CanConnectAsync(Arg.Is<ConnectionProfile>(p => p.Name == "通"), Arg.Any<CancellationToken>())
@@ -69,6 +91,13 @@ public class ConnectionProbeServiceTests
 
         Assert.Contains(progress.Messages, m => m.Contains("正在檢查 2 個連線"));
         Assert.Contains(progress.Messages, m => m.Contains("1 個可連線，跳過 1 個"));
+    }
+
+    /// <summary>建立延遲一段時間後回傳結果的 Task。用於驗證完成順序與輸入順序無關。</summary>
+    private static async Task<bool> DelayedAsync(int milliseconds, bool result)
+    {
+        await Task.Delay(milliseconds);
+        return result;
     }
 
     /// <summary>同步收集回報內容。用 Progress&lt;T&gt; 會經由 SynchronizationContext 非同步排程，
