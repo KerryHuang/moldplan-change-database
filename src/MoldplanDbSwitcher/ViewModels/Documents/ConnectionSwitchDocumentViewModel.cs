@@ -319,7 +319,10 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
 
             if (data.Customers.Count == 0)
             {
-                StatusMessage = $"所有連線查詢失敗：{string.Join(", ", data.FailedConnections)}";
+                var failMsg = $"所有連線查詢失敗：{string.Join(", ", data.FailedConnections)}";
+                if (probe.Unreachable.Count > 0)
+                    failMsg += $"（另有 {probe.Unreachable.Count} 個連線無法連線：{string.Join(", ", probe.Unreachable)}）";
+                StatusMessage = failMsg;
                 return;
             }
 
@@ -339,7 +342,7 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
             if (data.FailedConnections.Count > 0)
                 msg += $"（{data.FailedConnections.Count} 個連線失敗：{string.Join(", ", data.FailedConnections)}）";
             if (probe.Unreachable.Count > 0)
-                msg += $"（{probe.Unreachable.Count} 個連線不通已跳過：{string.Join(", ", probe.Unreachable)}）";
+                msg += $"（{probe.Unreachable.Count} 個連線無法連線，未查詢：{string.Join(", ", probe.Unreachable)}）";
             StatusMessage = msg;
         }
         catch (Exception ex)
@@ -387,7 +390,10 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
 
             if (data.Rows.Count == 0)
             {
-                StatusMessage = $"所有連線查詢失敗或無資料：{string.Join(", ", data.FailedConnections)}";
+                var failMsg = $"所有連線查詢失敗或無資料：{string.Join(", ", data.FailedConnections)}";
+                if (probe.Unreachable.Count > 0)
+                    failMsg += $"（另有 {probe.Unreachable.Count} 個連線無法連線：{string.Join(", ", probe.Unreachable)}）";
+                StatusMessage = failMsg;
                 return;
             }
 
@@ -407,7 +413,7 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
             if (data.FailedConnections.Count > 0)
                 msg += $"（{data.FailedConnections.Count} 個連線失敗：{string.Join(", ", data.FailedConnections)}）";
             if (probe.Unreachable.Count > 0)
-                msg += $"（{probe.Unreachable.Count} 個連線不通已跳過：{string.Join(", ", probe.Unreachable)}）";
+                msg += $"（{probe.Unreachable.Count} 個連線無法連線，未查詢：{string.Join(", ", probe.Unreachable)}）";
             StatusMessage = msg;
         }
         catch (Exception ex)
