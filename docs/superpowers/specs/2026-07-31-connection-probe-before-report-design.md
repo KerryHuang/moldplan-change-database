@@ -99,7 +99,7 @@ if (probe.Reachable.Count == 0)
 
 ```csharp
 if (probe.Unreachable.Count > 0)
-    msg += $"（{probe.Unreachable.Count} 個連線不通已跳過：{string.Join(", ", probe.Unreachable)}）";
+    msg += $"（{probe.Unreachable.Count} 個連線無法連線，未查詢：{string.Join(", ", probe.Unreachable)}）";
 ```
 
 `UsageReportData` 與 `FeatureReportData` 的結構不動——連不通屬於查詢前的階段，與「查詢失敗」（`FailedConnections`）、「查到但無資料」（`SkippedConnections`）語意不同，混進去反而模糊。

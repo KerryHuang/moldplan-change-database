@@ -566,7 +566,7 @@ Expected: FAIL — 編譯錯誤 `CS1729`，`ConnectionSwitchDocumentViewModel` �
 
 ```csharp
             if (probe.Unreachable.Count > 0)
-                msg += $"（{probe.Unreachable.Count} 個連線不通已跳過：{string.Join(", ", probe.Unreachable)}）";
+                msg += $"（{probe.Unreachable.Count} 個連線無法連線，未查詢：{string.Join(", ", probe.Unreachable)}）";
 ```
 
 - [ ] **Step 5: DI 註冊**
@@ -603,6 +603,6 @@ git commit -m "feat: 報表匯出前先平行預檢連線，連不通的跳過"
 
 - 進度依序顯示「正在檢查 N 個連線...」→「M 個可連線，跳過 K 個」→「正在查詢第 1/M 個客戶：...」
 - 整個預檢階段耗時約等於一次連線嘗試的時間，不隨連不通的客戶數增長
-- 匯出完成的訊息末尾包含「（K 個連線不通已跳過：...）」
+- 匯出完成的訊息末尾包含「（K 個連線無法連線，未查詢：...）」
 
 驗收需人工執行：本環境可用 Windows UI Automation 驅動 Avalonia（`System.Windows.Automation` 找到控制項後 `InvokePattern.Invoke()`），但實際匯出會對正式環境資料庫下查詢，不應由自動化觸發。
