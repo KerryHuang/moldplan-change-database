@@ -41,7 +41,7 @@ public class ConnectionSwitchDocumentViewModelTests
         _appSettingsService.Load().Returns(new AppSettings());
         _appSettingsDevService = Substitute.For<IAppSettingsDevService>();
         _connectionFactory = Substitute.For<ISqlConnectionFactory>();
-        _connectionFactory.Create(Arg.Any<ConnectionProfile>()).Returns(
+        _connectionFactory.Create(Arg.Any<ConnectionProfile>(), Arg.Any<int?>()).Returns(
             new SqlConnection("Server=localhost;Database=test;User Id=sa;Password=pass;"));
         _connectionProbe = Substitute.For<IConnectionProbeService>();
         _connectionProbe.ProbeAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(),
@@ -85,7 +85,7 @@ public class ConnectionSwitchDocumentViewModelTests
         appSettings.Load().Returns(new AppSettings());
         var appDev = Substitute.For<IAppSettingsDevService>();
         var factory = Substitute.For<ISqlConnectionFactory>();
-        factory.Create(Arg.Any<ConnectionProfile>()).Returns(
+        factory.Create(Arg.Any<ConnectionProfile>(), Arg.Any<int?>()).Returns(
             new SqlConnection("Server=localhost;Database=test;User Id=sa;Password=pass;"));
         active ??= new ActiveConnectionService();
 
@@ -122,7 +122,7 @@ public class ConnectionSwitchDocumentViewModelTests
         source.LoadCustomConnections().Returns(new List<ConnectionProfile>());
 
         var factory = Substitute.For<ISqlConnectionFactory>();
-        factory.Create(Arg.Any<ConnectionProfile>()).Returns(
+        factory.Create(Arg.Any<ConnectionProfile>(), Arg.Any<int?>()).Returns(
             new SqlConnection("Server=S;Database=DB1;User Id=sa;Password=pass;"));
 
         var serverTxt = Substitute.For<IServerTxtService>();
@@ -538,6 +538,36 @@ public class ConnectionSwitchDocumentViewModelTests
         await vm.ExportUsageReportCommand.ExecuteAsync(null);
 
         await _usageReportService.Received(1).QueryAllAsync(
+            Arg.Is<IReadOnlyList<ConnectionProfile>>(list =>
+                list.Count == 1 && list[0].Name == "通"),
+            Arg.Any<IProgress<string>>());
+    }
+
+    [Fact]
+    public async Task ExportFeatureReport_有連線不通_只查詢可連線的()
+    {
+        _connectionSource.LoadSpecuraiConnections().Returns(new List<ConnectionProfile>
+        {
+            new() { Name = "通", Server = "s", Database = "d", Source = "Specurai" },
+            new() { Name = "不通", Server = "s", Database = "d", Source = "Specurai" },
+        });
+        _connectionProbe.ProbeAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(),
+                Arg.Any<IProgress<string>>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult(new ConnectionProbeResult(
+                call.Arg<IReadOnlyList<ConnectionProfile>>().Where(p => p.Name == "通").ToList(),
+                ["不通"])));
+
+        var reportData = new FeatureReportData();
+        _featureReportService.QueryAllCustomerFeaturesAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(), Arg.Any<IProgress<string>>())
+            .Returns(reportData);
+
+        var vm = CreateVm();
+        vm.ReportSourceCallback = () => Task.FromResult<ReportSourceOptions?>(ReportSourceOptions.AllSelected);
+        vm.SaveFileCallback = () => Task.FromResult<string?>(System.IO.Path.GetTempFileName());
+
+        await vm.ExportFeatureReportCommand.ExecuteAsync(null);
+
+        await _featureReportService.Received(1).QueryAllCustomerFeaturesAsync(
             Arg.Is<IReadOnlyList<ConnectionProfile>>(list =>
                 list.Count == 1 && list[0].Name == "通"),
             Arg.Any<IProgress<string>>());

@@ -39,7 +39,7 @@ public class MainWindowViewModelTests
         _appSettingsService.Load().Returns(new AppSettings());
         _appSettingsDevService = Substitute.For<IAppSettingsDevService>();
         _connectionFactory = Substitute.For<ISqlConnectionFactory>();
-        _connectionFactory.Create(Arg.Any<ConnectionProfile>()).Returns(
+        _connectionFactory.Create(Arg.Any<ConnectionProfile>(), Arg.Any<int?>()).Returns(
             new SqlConnection("Server=localhost;Database=test;User Id=sa;Password=pass;"));
         _connectionProbe = Substitute.For<IConnectionProbeService>();
         _connectionProbe.ProbeAsync(Arg.Any<IReadOnlyList<ConnectionProfile>>(),
