@@ -3,3 +3,6 @@ apps/
 **/obj/
 publish/
 .claude/settings.local.json
+
+# SDD 隔離工作區
+.worktrees/
