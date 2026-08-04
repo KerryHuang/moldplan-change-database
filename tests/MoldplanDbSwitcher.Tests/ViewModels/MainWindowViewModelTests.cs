@@ -227,8 +227,9 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task AutoDownloadFails_BannerDoesNotAppear()
+    public async Task AutoDownloadFails_FallsBackToNotificationBanner()
     {
+        // 下載失敗不該讓使用者完全看不到「有新版」的通知，應退回一般通知橫幅（不可一鍵重啟）
         _appSettingsService.Load().Returns(new AppSettings { GitHubToken = "tok" });
         _updateCheckService.CheckAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new UpdateInfo("2.0.0", "https://example.com", "", CanAutoApply: true));
@@ -236,11 +237,11 @@ public class MainWindowViewModelTests
             .Returns<Task>(_ => throw new HttpRequestException("網路中斷"));
 
         var vm = CreateVm();
-        // 下載失敗時 UpdateAvailable/UpdateBannerText 永遠不會變，WaitForUpdateCheckAsync 的退出條件不會成立，
-        // 故此處改用固定延遲等待 fire-and-forget 執行到 catch 區塊。
-        await Task.Delay(200);
+        await WaitForUpdateCheckAsync(vm);
 
-        Assert.False(vm.UpdateAvailable);
+        Assert.True(vm.UpdateAvailable);
+        Assert.False(vm.UpdateReadyToRestart);
+        Assert.Contains("有新版", vm.UpdateBannerText);
     }
 
     [Fact]

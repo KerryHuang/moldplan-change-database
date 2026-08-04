@@ -26,13 +26,14 @@ public sealed class VelopackUpdateCheckService : IUpdateCheckService
 
     public async Task<Models.UpdateInfo?> CheckAsync(string? token, CancellationToken ct = default)
     {
+        // private repo：Windows 上無 token 時 API 必定 404，直接短路，
+        // 免得多建一個用不到的 UpdateManager（非 Windows 時仍交由下方委派 fallback 判斷）
+        if (OperatingSystem.IsWindows() && string.IsNullOrWhiteSpace(token))
+            return null;
+
         var manager = GetManagerOrNull(token);
         if (!OperatingSystem.IsWindows() || manager is null || !manager.IsInstalled)
             return await _fallback.CheckAsync(token, ct);
-
-        // private repo：無 token 時 API 必定 404，不嘗試
-        if (string.IsNullOrWhiteSpace(token))
-            return null;
 
         try
         {

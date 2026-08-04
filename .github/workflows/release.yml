@@ -63,7 +63,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-velopack
-          path: Releases/*
+          path: |
+            Releases/*Setup.exe
+            Releases/*.nupkg
+            Releases/releases.*.json
+            Releases/RELEASES
           retention-days: 30
 
   build-macos:

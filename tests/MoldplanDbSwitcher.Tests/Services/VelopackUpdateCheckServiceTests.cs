@@ -24,6 +24,18 @@ public class VelopackUpdateCheckServiceTests
         await _fallback.Received(1).CheckAsync("tok", Arg.Any<CancellationToken>());
     }
 
+    // Windows 上 private repo 無 token 時 API 必定 404，應直接短路回 null，不委派 fallback
+    [Fact]
+    public async Task CheckAsync_EmptyToken_ReturnsNullWithoutDelegatingToFallback()
+    {
+        var service = new VelopackUpdateCheckService(_fallback);
+
+        var result = await service.CheckAsync(null);
+
+        Assert.Null(result);
+        await _fallback.DidNotReceiveWithAnyArgs().CheckAsync(default, default);
+    }
+
     [Fact]
     public async Task DownloadAsync_NoUpdateDetected_ThrowsInvalidOperationException()
     {

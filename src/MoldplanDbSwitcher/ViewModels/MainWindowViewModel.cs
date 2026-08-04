@@ -103,10 +103,18 @@ public partial class MainWindowViewModel : ObservableObject
 
             if (info.CanAutoApply)
             {
-                // 背景自動下載，完成後橫幅提供一鍵重啟
-                await _updateCheckService.DownloadAsync();
-                UpdateBannerText = $"⬇ 已下載 v{info.LatestVersion}（目前 v{current}），重啟以完成更新";
-                UpdateReadyToRestart = true;
+                try
+                {
+                    // 背景自動下載，完成後橫幅提供一鍵重啟
+                    await _updateCheckService.DownloadAsync();
+                    UpdateBannerText = $"⬇ 已下載 v{info.LatestVersion}（目前 v{current}），重啟以完成更新";
+                    UpdateReadyToRestart = true;
+                }
+                catch
+                {
+                    // 下載失敗不代表沒有新版：仍要讓使用者看到通知，退回一般通知橫幅（不可一鍵重啟）
+                    UpdateBannerText = $"🎉 有新版 v{info.LatestVersion} 可用（目前 v{current}）";
+                }
             }
             else
             {
@@ -115,7 +123,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             UpdateAvailable = true;
         }
-        catch { /* 靜音：檢查或下載失敗都不打擾使用者 */ }
+        catch { /* 靜音：檢查更新失敗不打擾使用者 */ }
     }
 
     [RelayCommand]
