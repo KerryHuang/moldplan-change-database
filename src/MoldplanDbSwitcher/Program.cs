@@ -5,6 +5,7 @@ using MoldplanDbSwitcher.Services;
 using MoldplanDbSwitcher.Services.AnsibleSync;
 using MoldplanDbSwitcher.ViewModels;
 using MoldplanDbSwitcher.ViewModels.Documents;
+using Velopack;
 
 namespace MoldplanDbSwitcher;
 
@@ -13,6 +14,9 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // Velopack 必要掛鉤：安裝／更新／解除安裝時處理捷徑與版本切換後直接結束行程
+        VelopackApp.Build().Run();
+
         var services = new ServiceCollection();
         ConfigureServices(services);
         App.Services = services.BuildServiceProvider();
@@ -24,7 +28,7 @@ class Program
     {
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
-        services.AddSingleton<IUpdateCheckService>(_ => new UpdateCheckService());
+        services.AddSingleton<IUpdateCheckService>(_ => new VelopackUpdateCheckService(new UpdateCheckService()));
         services.AddSingleton<IConnectionSourceService, ConnectionSourceService>();
         services.AddSingleton<IServerTxtService, ServerTxtService>();
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
