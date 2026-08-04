@@ -28,6 +28,7 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty] private bool _updateAvailable;
     [ObservableProperty] private string _updateBannerText = "";
     [ObservableProperty] private string? _updateReleaseUrl;
+    [ObservableProperty] private bool _updateReadyToRestart;
 
     public MainWindowViewModel(
         ConnectionSwitchDocumentViewModel connectionSwitch,
@@ -99,9 +100,28 @@ public partial class MainWindowViewModel : ObservableObject
             if (info == null) return;
             UpdateReleaseUrl = info.ReleaseUrl;
             var current = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?";
-            UpdateBannerText = $"🎉 有新版 v{info.LatestVersion} 可用（目前 v{current}）";
+
+            if (info.CanAutoApply)
+            {
+                // 背景自動下載，完成後橫幅提供一鍵重啟
+                await _updateCheckService.DownloadAsync();
+                UpdateBannerText = $"⬇ 已下載 v{info.LatestVersion}（目前 v{current}），重啟以完成更新";
+                UpdateReadyToRestart = true;
+            }
+            else
+            {
+                UpdateBannerText = $"🎉 有新版 v{info.LatestVersion} 可用（目前 v{current}）";
+            }
+
             UpdateAvailable = true;
         }
+        catch { /* 靜音：檢查或下載失敗都不打擾使用者 */ }
+    }
+
+    [RelayCommand]
+    private void ApplyUpdateAndRestart()
+    {
+        try { _updateCheckService.ApplyAndRestart(); }
         catch { /* 靜音 */ }
     }
 

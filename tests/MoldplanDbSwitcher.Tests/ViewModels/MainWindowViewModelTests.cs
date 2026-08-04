@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Threading;
 using Xunit;
 using NSubstitute;
@@ -191,6 +192,61 @@ public class MainWindowViewModelTests
         vm.DismissUpdateCommand.Execute(null);
 
         Assert.False(vm.UpdateAvailable);
+    }
+
+    [Fact]
+    public async Task AutoApplicableUpdate_DownloadsAutomatically_AndShowsRestartBanner()
+    {
+        _appSettingsService.Load().Returns(new AppSettings { GitHubToken = "tok" });
+        _updateCheckService.CheckAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new UpdateInfo("2.0.0", "https://example.com", "", CanAutoApply: true));
+
+        var vm = CreateVm(); // 建構式內會觸發 CheckForUpdatesAsync
+        await Task.Delay(200); // 等待 fire-and-forget 完成
+
+        await _updateCheckService.Received(1).DownloadAsync(Arg.Any<IProgress<int>?>(), Arg.Any<CancellationToken>());
+        Assert.True(vm.UpdateAvailable);
+        Assert.True(vm.UpdateReadyToRestart);
+        Assert.Contains("重啟", vm.UpdateBannerText);
+    }
+
+    [Fact]
+    public async Task NotificationOnlyUpdate_KeepsExistingBanner_WithoutDownloading()
+    {
+        _appSettingsService.Load().Returns(new AppSettings { GitHubToken = "tok" });
+        _updateCheckService.CheckAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new UpdateInfo("2.0.0", "https://example.com/rel", ""));
+
+        var vm = CreateVm();
+        await Task.Delay(200);
+
+        await _updateCheckService.DidNotReceiveWithAnyArgs().DownloadAsync(default, default);
+        Assert.True(vm.UpdateAvailable);
+        Assert.False(vm.UpdateReadyToRestart);
+        Assert.Equal("https://example.com/rel", vm.UpdateReleaseUrl);
+    }
+
+    [Fact]
+    public async Task AutoDownloadFails_BannerDoesNotAppear()
+    {
+        _appSettingsService.Load().Returns(new AppSettings { GitHubToken = "tok" });
+        _updateCheckService.CheckAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new UpdateInfo("2.0.0", "https://example.com", "", CanAutoApply: true));
+        _updateCheckService.DownloadAsync(Arg.Any<IProgress<int>?>(), Arg.Any<CancellationToken>())
+            .Returns<Task>(_ => throw new HttpRequestException("網路中斷"));
+
+        var vm = CreateVm();
+        await Task.Delay(200);
+
+        Assert.False(vm.UpdateAvailable);
+    }
+
+    [Fact]
+    public void ApplyUpdateAndRestartCommand_CallsApplyAndRestart()
+    {
+        var vm = CreateVm();
+        vm.ApplyUpdateAndRestartCommand.Execute(null);
+        _updateCheckService.Received(1).ApplyAndRestart();
     }
 
     [Fact]

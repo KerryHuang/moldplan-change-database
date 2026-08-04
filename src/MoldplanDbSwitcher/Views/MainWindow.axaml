@@ -41,7 +41,10 @@
             IsVisible="{Binding UpdateAvailable}">
       <StackPanel Orientation="Horizontal" Spacing="12">
         <TextBlock Text="{Binding UpdateBannerText}" Foreground="White" VerticalAlignment="Center" />
-        <Button Content="下載新版" Click="OnDownloadUpdateClick" />
+        <Button Content="重啟更新" Command="{Binding ApplyUpdateAndRestartCommand}"
+                IsVisible="{Binding UpdateReadyToRestart}" />
+        <Button Content="下載新版" Click="OnDownloadUpdateClick"
+                IsVisible="{Binding !UpdateReadyToRestart}" />
         <Button Content="稍後" Command="{Binding DismissUpdateCommand}" />
       </StackPanel>
     </Border>
