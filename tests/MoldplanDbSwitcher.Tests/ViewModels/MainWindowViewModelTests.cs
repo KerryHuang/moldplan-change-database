@@ -202,7 +202,7 @@ public class MainWindowViewModelTests
             .Returns(new UpdateInfo("2.0.0", "https://example.com", "", CanAutoApply: true));
 
         var vm = CreateVm(); // 建構式內會觸發 CheckForUpdatesAsync
-        await Task.Delay(200); // 等待 fire-and-forget 完成
+        await WaitForUpdateCheckAsync(vm);
 
         await _updateCheckService.Received(1).DownloadAsync(Arg.Any<IProgress<int>?>(), Arg.Any<CancellationToken>());
         Assert.True(vm.UpdateAvailable);
@@ -218,7 +218,7 @@ public class MainWindowViewModelTests
             .Returns(new UpdateInfo("2.0.0", "https://example.com/rel", ""));
 
         var vm = CreateVm();
-        await Task.Delay(200);
+        await WaitForUpdateCheckAsync(vm);
 
         await _updateCheckService.DidNotReceiveWithAnyArgs().DownloadAsync(default, default);
         Assert.True(vm.UpdateAvailable);
@@ -236,6 +236,8 @@ public class MainWindowViewModelTests
             .Returns<Task>(_ => throw new HttpRequestException("網路中斷"));
 
         var vm = CreateVm();
+        // 下載失敗時 UpdateAvailable/UpdateBannerText 永遠不會變，WaitForUpdateCheckAsync 的退出條件不會成立，
+        // 故此處改用固定延遲等待 fire-and-forget 執行到 catch 區塊。
         await Task.Delay(200);
 
         Assert.False(vm.UpdateAvailable);
