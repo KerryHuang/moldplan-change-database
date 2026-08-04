@@ -52,8 +52,9 @@ jobs:
           path: ${{ env.APP_NAME }}-*.zip
           retention-days: 30
 
+      # vpk 版本需與 MoldplanDbSwitcher.csproj 的 Velopack 套件版本一致，升級其中一方時務必同步更新
       - name: 安裝 Velopack CLI
-        run: dotnet tool install -g vpk
+        run: dotnet tool install -g vpk --version 1.2.0
 
       - name: 建立 Velopack 安裝包
         run: vpk pack -u MoldplanDbSwitcher -v ${{ steps.get-version.outputs.version }} -p publish/win-x64 -e MoldplanDbSwitcher.exe --packTitle "MoldplanDbSwitcher" -o Releases
