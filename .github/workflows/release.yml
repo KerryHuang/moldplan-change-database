@@ -52,6 +52,19 @@ jobs:
           path: ${{ env.APP_NAME }}-*.zip
           retention-days: 30
 
+      - name: 安裝 Velopack CLI
+        run: dotnet tool install -g vpk
+
+      - name: 建立 Velopack 安裝包
+        run: vpk pack -u MoldplanDbSwitcher -v ${{ steps.get-version.outputs.version }} -p publish/win-x64 -e MoldplanDbSwitcher.exe --packTitle "MoldplanDbSwitcher" -o Releases
+
+      - name: 上傳 Velopack 構件
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-velopack
+          path: Releases/*
+          retention-days: 30
+
   build-macos:
     name: 建置 macOS (${{ matrix.arch }})
     runs-on: macos-latest
@@ -112,6 +125,7 @@ jobs:
         run: |
           mkdir -p release-files
           cp artifacts/windows-release/* release-files/ 2>/dev/null || true
+          cp artifacts/windows-velopack/* release-files/ 2>/dev/null || true
           cp artifacts/macos-release-arm64/* release-files/ 2>/dev/null || true
           cp artifacts/macos-release-x64/* release-files/ 2>/dev/null || true
           ls -la release-files/
