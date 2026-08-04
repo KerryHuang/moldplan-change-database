@@ -57,4 +57,10 @@ public class UpdateCheckService : IUpdateCheckService
         }
         catch { return null; }
     }
+
+    public Task DownloadAsync(IProgress<int>? progress = null, CancellationToken ct = default)
+        => throw new InvalidOperationException("此更新來源僅支援通知，請至 Release 頁面手動下載。");
+
+    public void ApplyAndRestart()
+        => throw new InvalidOperationException("此更新來源僅支援通知，請至 Release 頁面手動下載。");
 }

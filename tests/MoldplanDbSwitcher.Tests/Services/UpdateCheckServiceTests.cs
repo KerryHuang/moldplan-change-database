@@ -124,4 +124,18 @@ public class UpdateCheckServiceTests
         var sut = Create(FakeHttpMessageHandler.Json(System.Net.HttpStatusCode.OK, json));
         Assert.Null(await sut.CheckAsync("t"));
     }
+
+    [Fact]
+    public async Task DownloadAsync_NotificationOnlyMode_ThrowsInvalidOperationException()
+    {
+        var service = new UpdateCheckService();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.DownloadAsync());
+    }
+
+    [Fact]
+    public void ApplyAndRestart_NotificationOnlyMode_ThrowsInvalidOperationException()
+    {
+        var service = new UpdateCheckService();
+        Assert.Throws<InvalidOperationException>(() => service.ApplyAndRestart());
+    }
 }
