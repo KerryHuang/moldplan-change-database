@@ -22,6 +22,10 @@ public partial class MainWindowViewModel : ObservableObject
 
     public ConnectionSwitchDocumentViewModel ConnectionSwitch { get; }
 
+    /// <summary>視窗標題：App 名稱 + 目前版本（與更新橫幅同一版本來源）</summary>
+    public string WindowTitle { get; } =
+        $"資料庫連線切換工具 v{Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?"}";
+
     [ObservableProperty] private ObservableCollection<DocumentViewModel> _documents = [];
     [ObservableProperty] private DocumentViewModel? _selectedDocument;
 

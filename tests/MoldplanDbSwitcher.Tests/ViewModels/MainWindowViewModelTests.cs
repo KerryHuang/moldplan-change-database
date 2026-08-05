@@ -98,6 +98,16 @@ public class MainWindowViewModelTests
         _appSettingsService);
 
     [Fact]
+    public void WindowTitle_ContainsAppNameAndAssemblyVersion()
+    {
+        var vm = CreateVm();
+
+        var expectedVersion = typeof(MainWindowViewModel).Assembly.GetName().Version?.ToString(3) ?? "?";
+        Assert.StartsWith("資料庫連線切換工具 v", vm.WindowTitle);
+        Assert.EndsWith(expectedVersion, vm.WindowTitle);
+    }
+
+    [Fact]
     public void Startup_OpensConnectionSwitch_AsActiveDocument()
     {
         var vm = CreateVm();

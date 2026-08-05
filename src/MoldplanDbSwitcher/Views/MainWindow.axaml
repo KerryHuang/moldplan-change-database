@@ -7,7 +7,7 @@
         xmlns:models="using:MoldplanDbSwitcher.Models"
         x:Class="MoldplanDbSwitcher.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="資料庫連線切換工具"
+        Title="{Binding WindowTitle}"
         Icon="/Assets/app-icon.ico"
         Width="980" Height="700"
         WindowStartupLocation="CenterScreen">
