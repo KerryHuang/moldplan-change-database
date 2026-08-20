@@ -212,6 +212,45 @@ public class ConnectionSwitchDocumentViewModelTests
     }
 
     [Fact]
+    public async Task ApplyChanges_變更後欄位數不是5_附加警示但仍套用()
+    {
+        _serverTxtService.DiscoverPaths().Returns(new List<string> { @"C:\WDMIS\SERVER.txt" });
+        _serverTxtService.Apply(Arg.Any<string>(), Arg.Any<ConnectionProfile>()).Returns(true);
+        _serverTxtService.ReadEntry(Arg.Any<string>()).Returns(new ServerTxtEntry
+        {
+            Field1 = "mis", DatabaseName = "old", ServerAddress = "0.0.0.0", Field4 = "X", Field5 = "1"
+        });
+        _serverTxtService.Preview(Arg.Any<ServerTxtEntry>(), Arg.Any<ConnectionProfile>())
+            .Returns("mis,ANCHIAO,100.92.189.23,1434,XXX,1");
+
+        var vm = CreateVm();
+        await vm.ApplyChangesCommand.ExecuteAsync(null);
+
+        _serverTxtService.Received().Apply(Arg.Any<string>(), Arg.Any<ConnectionProfile>());
+        Assert.Contains("成功", vm.StatusMessage);
+        Assert.Contains("欄位", vm.StatusMessage);
+    }
+
+    [Fact]
+    public async Task ApplyChanges_變更後欄位數為5_無警示()
+    {
+        _serverTxtService.DiscoverPaths().Returns(new List<string> { @"C:\WDMIS\SERVER.txt" });
+        _serverTxtService.Apply(Arg.Any<string>(), Arg.Any<ConnectionProfile>()).Returns(true);
+        _serverTxtService.ReadEntry(Arg.Any<string>()).Returns(new ServerTxtEntry
+        {
+            Field1 = "mis", DatabaseName = "old", ServerAddress = "0.0.0.0", Field4 = "X", Field5 = "1"
+        });
+        _serverTxtService.Preview(Arg.Any<ServerTxtEntry>(), Arg.Any<ConnectionProfile>())
+            .Returns("mis,ANCHIAO,100.92.189.23,XXX,1");
+
+        var vm = CreateVm();
+        await vm.ApplyChangesCommand.ExecuteAsync(null);
+
+        Assert.Contains("成功", vm.StatusMessage);
+        Assert.DoesNotContain("欄位", vm.StatusMessage);
+    }
+
+    [Fact]
     public void AddCustomConnection_CallsSettingsService()
     {
         var vm = CreateVm();

@@ -54,13 +54,20 @@ public class ServerTxtService : IServerTxtService
         }
     }
 
+    // SERVER.txt 為逗號分隔格式，伺服器位址不能帶「,PORT」後綴
+    private static string StripPort(string server)
+    {
+        var commaIndex = server.IndexOf(',');
+        return commaIndex >= 0 ? server[..commaIndex] : server;
+    }
+
     public string Preview(ServerTxtEntry original, ConnectionProfile target)
     {
         var modified = new ServerTxtEntry
         {
             Field1 = original.Field1,
             DatabaseName = target.Database,
-            ServerAddress = target.Server,
+            ServerAddress = StripPort(target.Server),
             Field4 = original.Field4,
             Field5 = original.Field5
         };
@@ -75,7 +82,7 @@ public class ServerTxtService : IServerTxtService
             if (entry is null) return false;
 
             entry.DatabaseName = target.Database;
-            entry.ServerAddress = target.Server;
+            entry.ServerAddress = StripPort(target.Server);
             File.WriteAllText(path, entry.ToLine());
             return true;
         }

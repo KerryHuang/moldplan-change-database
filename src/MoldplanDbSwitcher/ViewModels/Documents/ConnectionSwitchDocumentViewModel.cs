@@ -241,9 +241,19 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
 
         var successCount = 0;
         var failCount = 0;
+        var fieldWarnings = new List<string>();
 
         foreach (var file in selectedFiles)
         {
+            // SERVER.txt 為逗號分隔的 5 欄格式，欄位數不對只提示、不擋套用
+            var entry = _serverTxtService.ReadEntry(file.Path);
+            if (entry is not null)
+            {
+                var fieldCount = _serverTxtService.Preview(entry, SelectedConnection).Split(',').Length;
+                if (fieldCount != 5)
+                    fieldWarnings.Add($"{file.Path} 欄位數為 {fieldCount}（預期 5）");
+            }
+
             if (_serverTxtService.Apply(file.Path, SelectedConnection))
                 successCount++;
             else
@@ -254,6 +264,9 @@ public partial class ConnectionSwitchDocumentViewModel : DocumentViewModel
             StatusMessage = $"已成功更新 {successCount} 個檔案";
         else
             StatusMessage = $"完成：{successCount} 個成功，{failCount} 個失敗";
+
+        if (fieldWarnings.Count > 0)
+            StatusMessage += $"（⚠ {string.Join("；", fieldWarnings)}）";
 
         UpdatePreview();
     }

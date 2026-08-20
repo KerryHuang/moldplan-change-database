@@ -70,6 +70,36 @@ public class ServerTxtServiceTests : IDisposable
     }
 
     [Fact]
+    public void Preview_ServerWithPort_StripsPort()
+    {
+        var original = new ServerTxtEntry
+        {
+            Field1 = "mis",
+            DatabaseName = "yungmaun-test",
+            ServerAddress = "192.20.10.9",
+            Field4 = "XXX",
+            Field5 = "1"
+        };
+        var target = new ConnectionProfile { Server = "100.92.189.23,1434", Database = "ANCHIAO" };
+
+        var result = _service.Preview(original, target);
+        Assert.Equal("mis,ANCHIAO,100.92.189.23,XXX,1", result);
+    }
+
+    [Fact]
+    public void Apply_ServerWithPort_StripsPort()
+    {
+        var path = Path.Combine(_tempDir, "SERVER.txt");
+        File.WriteAllText(path, "mis,yungmaun-test,192.20.10.9,XXX,1");
+
+        var target = new ConnectionProfile { Server = "100.92.189.23,1434", Database = "ANCHIAO" };
+        var result = _service.Apply(path, target);
+
+        Assert.True(result);
+        Assert.Equal("mis,ANCHIAO,100.92.189.23,XXX,1", File.ReadAllText(path));
+    }
+
+    [Fact]
     public void Apply_WritesModifiedContent()
     {
         var path = Path.Combine(_tempDir, "SERVER.txt");
